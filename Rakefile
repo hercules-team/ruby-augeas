@@ -14,8 +14,8 @@ require 'rake/testtask'
 require 'rake/gempackagetask'
 
 PKG_NAME='ruby-augeas'
-GEM_NAME='augeas'
-PKG_VERSION='0.0.1'
+GEM_NAME=PKG_NAME # we'd like 'augeas' but that makes RPM fail
+PKG_VERSION='0.0.2'
 EXT_CONF='ext/augeas/extconf.rb'
 MAKEFILE="ext/augeas/Makefile"
 AUGEAS_MODULE="ext/augeas/_augeas.so"
@@ -25,7 +25,7 @@ AUGEAS_SRC=AUGEAS_MODULE.gsub(/.so$/, ".c")
 
 #
 # Building the actual bits
-# 
+#
 CLEAN.include "**/*~"
 
 CLOBBER.include [ "config.save",
@@ -50,11 +50,11 @@ file AUGEAS_MODULE => [ MAKEFILE, AUGEAS_SRC ] do |t|
      end
 end
 desc "Build the native library"
-task :build => AUGEAS_MODULE      
+task :build => AUGEAS_MODULE
 
 #
 # Testing
-#          
+#
 Rake::TestTask.new(:test) do |t|
     t.test_files = FileList['tests/tc_*.rb']
     t.libs = [ 'lib', 'ext/augeas' ]
@@ -114,6 +114,3 @@ task :rpm => [ :package ] do |t|
         end
     end
 end
-
-
-
