@@ -3,17 +3,18 @@
 
 Name:           ruby-augeas
 Version:        @VERSION@
-Release:        3%{?dist}
-Summary:        Ruby bindings for augeas
+Release:        1%{?dist}
+Summary:        Ruby bindings for Augeas
 Group:          Development/Languages
 
 License:        LGPLv2+
 URL:            http://augeas.net
-Source0:        ./ruby-augeas-@VERSION@.tgz
+Source0:        ruby-augeas-@VERSION@.tgz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby ruby-devel rubygem(rake)
-BuildRequires:  augeas-devel
+BuildRequires:  augeas-devel >= 0.0.5
+BuildRequires:  pkgconfig
 Requires:       ruby(abi) = 1.8
 Provides:       ruby(augeas) = %{version}
 
