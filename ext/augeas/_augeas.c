@@ -22,15 +22,36 @@
 #include <ruby.h>
 #include <augeas.h>
 
+static VALUE c_augeas;
+
+static augeas_t aug_handle(VALUE s) {
+    augeas_t aug;
+
+    /* This is the same as Data_Get_Struct without having to know
+       that augeas_t is a pointer to something and what that something is
+       */
+    Check_Type(s, T_DATA);
+    aug = DATA_PTR(s);
+    if (aug == NULL) {
+        rb_raise(rb_eSystemCallError, "Failed to retrieve connection");
+    }
+    return aug;
+}
+
+static void augeas_close(void *aug) {
+    aug_close(aug);
+}
+
 /*
  * call-seq:
  *   get(PATH) -> String
  *
  * Lookup the value associated with PATH
  */
-VALUE augeas_get(VALUE m, VALUE path) {
+VALUE augeas_get(VALUE s, VALUE path) {
+    augeas_t aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
-    const char *value = aug_get(cpath) ;
+    const char *value = aug_get(aug, cpath) ;
     VALUE returnValue = Qnil ;
     if (value != NULL) {
         returnValue = rb_str_new(value, strlen(value)) ;
@@ -42,11 +63,12 @@ VALUE augeas_get(VALUE m, VALUE path) {
  * call-seq:
  *   exists(PATH) -> boolean
  *
- * Return true if there is an entry for this path, false otherwise 
+ * Return true if there is an entry for this path, false otherwise
  */
-VALUE augeas_exists(VALUE m, VALUE path) {
+VALUE augeas_exists(VALUE s, VALUE path) {
+    augeas_t aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
-    int callValue = aug_exists(cpath) ;
+    int callValue = aug_exists(aug, cpath) ;
     VALUE returnValue ;
 
     if (callValue == 1)
@@ -65,11 +87,12 @@ VALUE augeas_exists(VALUE m, VALUE path) {
  * internal data structure. Intermediate entries are created if they don't
  * exist.
  */
-VALUE augeas_set(VALUE m, VALUE path, VALUE value) {
+VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
+    augeas_t aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
     const char *cvalue = StringValuePtr(value) ;
 
-    int callValue = aug_set(cpath, cvalue) ;
+    int callValue = aug_set(aug, cpath, cvalue) ;
     VALUE returnValue ;
 
     if (callValue == 0)
@@ -86,11 +109,12 @@ VALUE augeas_set(VALUE m, VALUE path, VALUE value) {
  *
  * Make PATH a SIBLING of PATH by inserting it directly before SIBLING.
  */
-VALUE augeas_insert(VALUE m, VALUE path, VALUE sibling) {
+VALUE augeas_insert(VALUE s, VALUE path, VALUE sibling) {
+    augeas_t aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
     const char *csibling = StringValuePtr(sibling) ;
 
-    int callValue = aug_insert(cpath, csibling) ;
+    int callValue = aug_insert(aug, cpath, csibling) ;
     return INT2FIX(callValue) ;
 }
 
@@ -100,10 +124,11 @@ VALUE augeas_insert(VALUE m, VALUE path, VALUE sibling) {
  *
  * Remove path and all its children. Returns the number of entries removed
  */
-VALUE augeas_rm(VALUE m, VALUE path, VALUE sibling) {
+VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
+    augeas_t aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
 
-    int callValue = aug_rm(cpath) ;
+    int callValue = aug_rm(aug, cpath) ;
     return INT2FIX(callValue) ;
 }
 
@@ -117,12 +142,12 @@ VALUE augeas_rm(VALUE m, VALUE path, VALUE sibling) {
  * of children is returned. Returns -1 on error, or the total number of
  * children of PATH.
  */
-VALUE augeas_ls(VALUE m, VALUE path) {
-
+VALUE augeas_ls(VALUE s, VALUE path) {
+    augeas_t aug = aug_handle(s);
     int cnt = 0 ;
     const char **paths ;
     char *cpath = StringValuePtr(path) ;
-    cnt = aug_ls(cpath, &paths) ;
+    cnt = aug_ls(aug, cpath, &paths) ;
     VALUE returnArray = rb_ary_new() ;
     if (cnt > 0) {
         int x ;
@@ -148,7 +173,8 @@ VALUE augeas_ls(VALUE m, VALUE path) {
  * The PATTERN is passed to fnmatch(3) verbatim, and FNM_FILE_NAME is not set,
  * so that '*' does not match a '/'
  */
-VALUE augeas_match(int argc, VALUE *argv, VALUE obj) {
+VALUE augeas_match(int argc, VALUE *argv, VALUE s) {
+    augeas_t aug = aug_handle(s);
 
     if (argc == 0)
         rb_raise(rb_eArgError, "wrong number of arguments (0 for 1)") ;
@@ -162,12 +188,12 @@ VALUE augeas_match(int argc, VALUE *argv, VALUE obj) {
     }
     else  {
         // pre-fetch to get the count if no size was provided
-        csize = aug_match(cpattern, NULL, 0) ;
+        csize = aug_match(aug, cpattern, NULL, 0) ;
     }
 
     // grab memory and make the call
     const char **matches = calloc(csize, sizeof(char *));
-    int cnt = aug_match(cpattern, matches, csize) ;
+    int cnt = aug_match(aug, cpattern, matches, csize) ;
 
     // Process the return value
     VALUE returnArray = rb_ary_new() ;
@@ -189,8 +215,9 @@ VALUE augeas_match(int argc, VALUE *argv, VALUE obj) {
  *
  * Write all pending changes to disk
  */
-VALUE augeas_save(VALUE m) {
-    int callValue = aug_save() ;
+VALUE augeas_save(VALUE s) {
+    augeas_t aug = aug_handle(s);
+    int callValue = aug_save(aug) ;
     VALUE returnValue ;
 
     if (callValue == 0)
@@ -201,25 +228,35 @@ VALUE augeas_save(VALUE m) {
     return returnValue ;
 }
 
+/*
+ * call-seq:
+ *       open() -> Augeas
+ *
+ * Create a new instance and return it
+ */
 VALUE augeas_init(VALUE m) {
-    aug_init() ;
+    augeas_t aug = aug_init();
+    if (aug == NULL) {
+        rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
+    }
+    return Data_Wrap_Struct(c_augeas, NULL, augeas_close, aug);
 }
 
 void Init__augeas() {
 
     /* Define the ruby class */
-    VALUE augeasclass = rb_define_class("Augeas",rb_cObject) ;
+    c_augeas = rb_define_class("Augeas", rb_cObject) ;
 
     /* Define the methods */
-    rb_define_protected_method(augeasclass, "aug_init", augeas_init, 0) ;
-    rb_define_method(augeasclass, "get", augeas_get, 1) ;
-    rb_define_method(augeasclass, "exists", augeas_exists, 1) ;
-    rb_define_method(augeasclass, "insert", augeas_insert, 2) ;
-    rb_define_method(augeasclass, "rm", augeas_rm, 1) ;
-    rb_define_method(augeasclass, "ls", augeas_ls, 1) ;
-    rb_define_method(augeasclass, "match", augeas_match, -1) ;
-    rb_define_method(augeasclass, "save", augeas_save, 0) ;
-    rb_define_method(augeasclass, "set", augeas_set, 2) ;
+    rb_define_singleton_method(c_augeas, "open", augeas_init, 0) ;
+    rb_define_method(c_augeas, "get", augeas_get, 1) ;
+    rb_define_method(c_augeas, "exists", augeas_exists, 1) ;
+    rb_define_method(c_augeas, "insert", augeas_insert, 2) ;
+    rb_define_method(c_augeas, "rm", augeas_rm, 1) ;
+    rb_define_method(c_augeas, "ls", augeas_ls, 1) ;
+    rb_define_method(c_augeas, "match", augeas_match, -1) ;
+    rb_define_method(c_augeas, "save", augeas_save, 0) ;
+    rb_define_method(c_augeas, "set", augeas_set, 2) ;
 }
 
 /*
