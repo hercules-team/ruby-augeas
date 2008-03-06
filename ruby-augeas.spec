@@ -13,7 +13,7 @@ Source0:        ruby-augeas-@VERSION@.tgz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby ruby-devel rubygem(rake)
-BuildRequires:  augeas-devel >= 0.0.5
+BuildRequires:  augeas-devel >= 0.0.6
 BuildRequires:  pkgconfig
 Requires:       ruby(abi) = 1.8
 Provides:       ruby(augeas) = %{version}
