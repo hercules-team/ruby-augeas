@@ -15,13 +15,16 @@ require 'rake/gempackagetask'
 
 PKG_NAME='ruby-augeas'
 GEM_NAME=PKG_NAME # we'd like 'augeas' but that makes RPM fail
-PKG_VERSION='0.0.2'
+PKG_VERSION='0.0.3'
 EXT_CONF='ext/augeas/extconf.rb'
 MAKEFILE="ext/augeas/Makefile"
 AUGEAS_MODULE="ext/augeas/_augeas.so"
 SPEC_FILE="ruby-augeas.spec"
 AUGEAS_SRC=AUGEAS_MODULE.gsub(/.so$/, ".c")
 
+DIST_FILES = FileList[
+  "pkg/*.tgz", "pkg/*.gem"
+]
 
 #
 # Building the actual bits
@@ -32,7 +35,7 @@ CLOBBER.include [ "config.save",
                   "ext/**/*.o", AUGEAS_MODULE,
                   "ext/**/depend", "ext/**/mkmf.log", 
                   MAKEFILE ]
-                  
+
 file MAKEFILE => EXT_CONF do |t|
     Dir::chdir(File::dirname(EXT_CONF)) do
          unless sh "ruby #{File::basename(EXT_CONF)}"
@@ -40,7 +43,7 @@ file MAKEFILE => EXT_CONF do |t|
              break
          end
     end
-end 
+end
 file AUGEAS_MODULE => [ MAKEFILE, AUGEAS_SRC ] do |t|
     Dir::chdir(File::dirname(EXT_CONF)) do
          unless sh "make"
@@ -62,7 +65,7 @@ end
 task :test => :build
 
 
-# 
+#
 # Generate the documentation
 #
 Rake::RDocTask.new do |rd|
@@ -113,4 +116,16 @@ task :rpm => [ :package ] do |t|
             raise "rpmbuild failed"
         end
     end
+end
+
+desc "Release a version to the site"
+task :dist => [ :rpm ] do |t|
+    puts "Copying files"
+    unless sh "scp -p #{DIST_FILES.to_s} et:/var/www/augeas.et.redhat.com/download"
+        $stderr.puts "Copy to et failed"
+        break
+    end
+    puts "Commit and tag #{PKG_VERSION}"
+    system "hg commit -m 'Released version #{PKG_VERSION}'"
+    system "hg tag -m 'Tag release #{PKG_VERSION}' release-#{PKG_VERSION}"
 end
