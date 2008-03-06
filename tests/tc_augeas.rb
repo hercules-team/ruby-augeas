@@ -1,12 +1,15 @@
 require 'test/unit'
 
 $:.unshift(File::join(File::dirname(__FILE__), "..", "lib"))
-$:.unshift(File::join(File::dirname(__FILE__), "..", "ext", "libvirt"))
+$:.unshift(File::join(File::dirname(__FILE__), "..", "ext", "augeas"))
 require 'augeas'
 
 class TestAugeas < Test::Unit::TestCase
     def test_basics
-        aug = Augeas::open()
+        aug = Augeas::open("/tmp", Augeas::SAVE_NEWFILE)
+        assert_equal("newfile", aug.get("/augeas/save"))
+        assert_equal("/tmp", aug.get("/augeas/root"))
+
         assert(aug.exists("/augeas/root"))
         assert_not_nil(aug.get("/augeas/root"))
         assert_nothing_raised {

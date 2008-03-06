@@ -230,12 +230,16 @@ VALUE augeas_save(VALUE s) {
 
 /*
  * call-seq:
- *       open() -> Augeas
+ *       open(ROOT, FLAGS) -> Augeas
  *
  * Create a new instance and return it
  */
-VALUE augeas_init(VALUE m) {
-    augeas_t aug = aug_init();
+VALUE augeas_init(VALUE m, VALUE r, VALUE f) {
+    unsigned int flags = NUM2UINT(f);
+    const char *root = StringValueCStr(r);
+    augeas_t aug = NULL;
+
+    aug = aug_init(root, flags);
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
@@ -247,8 +251,16 @@ void Init__augeas() {
     /* Define the ruby class */
     c_augeas = rb_define_class("Augeas", rb_cObject) ;
 
+    /* Constants for enum aug_flags */
+#define DEF_AUG_FLAG(name) \
+    rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
+    DEF_AUG_FLAG(NONE);
+    DEF_AUG_FLAG(SAVE_BACKUP);
+    DEF_AUG_FLAG(SAVE_NEWFILE);
+#undef DEF_AUG_FLAG
+
     /* Define the methods */
-    rb_define_singleton_method(c_augeas, "open", augeas_init, 0) ;
+    rb_define_singleton_method(c_augeas, "open", augeas_init, 2) ;
     rb_define_method(c_augeas, "get", augeas_get, 1) ;
     rb_define_method(c_augeas, "exists", augeas_exists, 1) ;
     rb_define_method(c_augeas, "insert", augeas_insert, 2) ;
