@@ -22,10 +22,6 @@ AUGEAS_MODULE="ext/augeas/_augeas.so"
 SPEC_FILE="ruby-augeas.spec"
 AUGEAS_SRC=AUGEAS_MODULE.gsub(/.so$/, ".c")
 
-DIST_FILES = FileList[
-  "pkg/*.tgz", "pkg/*.gem"
-]
-
 #
 # Building the actual bits
 #
@@ -85,7 +81,7 @@ PKG_FILES = FileList[
 ]
 
 DIST_FILES = FileList[
-  "pkg/*.rpm",  "pkg/*.gem",  "pkg/*.zip", "pkg/*.tgz"
+  "pkg/*.tgz", "pkg/*.gem"
 ]
 
 SPEC = Gem::Specification.new do |s|
