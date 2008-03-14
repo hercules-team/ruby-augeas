@@ -117,7 +117,7 @@ end
 desc "Release a version to the site"
 task :dist => [ :rpm ] do |t|
     puts "Copying files"
-    unless sh "scp -p #{DIST_FILES.to_s} et:/var/www/augeas.et.redhat.com/download"
+    unless sh "scp -p #{DIST_FILES.to_s} et:/var/www/sites/augeas.et.redhat.com/download"
         $stderr.puts "Copy to et failed"
         break
     end
