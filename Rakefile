@@ -25,11 +25,12 @@ AUGEAS_SRC=AUGEAS_MODULE.gsub(/.so$/, ".c")
 #
 # Building the actual bits
 #
-CLEAN.include "**/*~"
+CLEAN.include [ "**/*~",
+                "ext/**/*.o", AUGEAS_MODULE,
+                "ext/**/depend" ]
 
 CLOBBER.include [ "config.save",
-                  "ext/**/*.o", AUGEAS_MODULE,
-                  "ext/**/depend", "ext/**/mkmf.log", 
+                  "ext/**/mkmf.log",
                   MAKEFILE ]
 
 file MAKEFILE => EXT_CONF do |t|
