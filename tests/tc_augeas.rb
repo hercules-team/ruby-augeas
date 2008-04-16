@@ -6,9 +6,9 @@ require 'augeas'
 
 class TestAugeas < Test::Unit::TestCase
     def test_basics
-        aug = Augeas::open("/tmp", Augeas::SAVE_NEWFILE)
+        aug = Augeas::open("/tmp", nil, Augeas::SAVE_NEWFILE)
         assert_equal("newfile", aug.get("/augeas/save"))
-        assert_equal("/tmp", aug.get("/augeas/root"))
+        assert_equal("/tmp/", aug.get("/augeas/root"))
 
         assert(aug.exists("/augeas/root"))
         assert_not_nil(aug.get("/augeas/root"))
@@ -16,15 +16,11 @@ class TestAugeas < Test::Unit::TestCase
             aug.set("/ruby/test/node", "value")
         }
         assert_equal("value", aug.get("/ruby/test/node"))
-        m = aug.match("*")
-        ["/system", "/system/config",
-         "/augeas", "/augeas/root",
-         "/ruby", "/ruby/test"].each do |p|
+        m = aug.match("/*")
+        ["/augeas", "/ruby"].each do |p|
             assert(m.include?(p))
             assert(aug.exists(p))
         end
-        l = aug.ls("/ruby");
-        assert_equal(["/ruby/test"], l)
     end
 
     def test_no_new
