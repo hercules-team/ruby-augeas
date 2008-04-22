@@ -24,14 +24,10 @@
 
 static VALUE c_augeas;
 
-static augeas_t aug_handle(VALUE s) {
-    augeas_t aug;
+static augeas *aug_handle(VALUE s) {
+    augeas *aug;
 
-    /* This is the same as Data_Get_Struct without having to know
-       that augeas_t is a pointer to something and what that something is
-       */
-    Check_Type(s, T_DATA);
-    aug = DATA_PTR(s);
+    Data_Get_Struct(s, struct augeas, aug);
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to retrieve connection");
     }
@@ -49,14 +45,16 @@ static void augeas_close(void *aug) {
  * Lookup the value associated with PATH
  */
 VALUE augeas_get(VALUE s, VALUE path) {
-    augeas_t aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path) ;
-    const char *value = aug_get(aug, cpath) ;
-    VALUE returnValue = Qnil ;
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValuePtr(path);
+    const char *value;
+
+    aug_get(aug, cpath, &value);
     if (value != NULL) {
-        returnValue = rb_str_new(value, strlen(value)) ;
+        return rb_str_new(value, strlen(value)) ;
+    } else {
+        return Qnil;
     }
-    return returnValue ;
 }
 
 /*
@@ -66,17 +64,11 @@ VALUE augeas_get(VALUE s, VALUE path) {
  * Return true if there is an entry for this path, false otherwise
  */
 VALUE augeas_exists(VALUE s, VALUE path) {
-    augeas_t aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path) ;
-    int callValue = aug_exists(aug, cpath) ;
-    VALUE returnValue ;
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValuePtr(path);
+    int ret = aug_get(aug, cpath, NULL);
 
-    if (callValue == 1)
-        returnValue = Qtrue ;
-    else
-        returnValue = Qfalse ;
-
-    return returnValue ;
+    return (ret == 1) ? Qtrue : Qfalse;
 }
 
 /*
@@ -88,7 +80,7 @@ VALUE augeas_exists(VALUE s, VALUE path) {
  * exist.
  */
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
-    augeas_t aug = aug_handle(s);
+    augeas *aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
     const char *cvalue = StringValuePtr(value) ;
 
@@ -111,7 +103,7 @@ VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
  * The boolean BEFORE determines if LABEL is inserted before or after PATH.
  */
 VALUE augeas_insert(VALUE s, VALUE path, VALUE label, VALUE before) {
-    augeas_t aug = aug_handle(s);
+    augeas *aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
     const char *clabel = StringValuePtr(label) ;
 
@@ -126,7 +118,7 @@ VALUE augeas_insert(VALUE s, VALUE path, VALUE label, VALUE before) {
  * Remove path and all its children. Returns the number of entries removed
  */
 VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
-    augeas_t aug = aug_handle(s);
+    augeas *aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
 
     int callValue = aug_rm(aug, cpath) ;
@@ -141,7 +133,7 @@ VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
  * strings.
  */
 VALUE augeas_match(VALUE s, VALUE p) {
-    augeas_t aug = aug_handle(s);
+    augeas *aug = aug_handle(s);
     const char *path = StringValuePtr(p);
     char **matches = NULL;
     int cnt, i;
@@ -168,7 +160,7 @@ VALUE augeas_match(VALUE s, VALUE p) {
  * Write all pending changes to disk
  */
 VALUE augeas_save(VALUE s) {
-    augeas_t aug = aug_handle(s);
+    augeas *aug = aug_handle(s);
     int callValue = aug_save(aug) ;
     VALUE returnValue ;
 
@@ -190,7 +182,7 @@ VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
     const char *root = (r == Qnil) ? NULL : StringValueCStr(r);
     const char *loadpath = (l == Qnil) ? NULL : StringValueCStr(l);
-    augeas_t aug = NULL;
+    augeas *aug = NULL;
 
     aug = aug_init(root, loadpath, flags);
     if (aug == NULL) {
