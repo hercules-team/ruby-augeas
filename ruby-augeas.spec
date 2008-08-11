@@ -35,7 +35,7 @@ install -d -m0755 %{buildroot}%{ruby_sitelib}
 install -d -m0755 %{buildroot}%{ruby_sitearch}
 install -p -m0644 lib/augeas.rb %{buildroot}%{ruby_sitelib}
 install -p -m0755 ext/augeas/_augeas.so %{buildroot}%{ruby_sitearch}
- 
+
 %check
 rake test
 
@@ -51,6 +51,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri May  9 2008 David Lutterkort <dlutter@redhat.com> - 0.1.0-1
+- Fixed up in accordance with Fedora guidelines
+
 * Mon Mar 3 2008 Bryan Kearney <bkearney@redhat.com> - 0.0.1-1
 - Initial specfile
-
