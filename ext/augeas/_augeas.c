@@ -34,8 +34,9 @@ static augeas *aug_handle(VALUE s) {
     return aug;
 }
 
-static void augeas_close(void *aug) {
-    aug_close(aug);
+static void augeas_free(augeas *aug) {
+    if (aug != NULL)
+        aug_close(aug);
 }
 
 /*
@@ -176,7 +177,16 @@ VALUE augeas_save(VALUE s) {
  * call-seq:
  *       open(ROOT, LOADPATH, FLAGS) -> Augeas
  *
- * Create a new instance and return it
+ * Create a new Augeas instance and return it.
+ *
+ * Use ROOT as the filesystem root. If ROOT is NULL, use the value of the
+ * environment variable AUGEAS_ROOT. If that doesn't exist eitehr, use "/".
+ *
+ * LOADPATH is a colon-spearated list of directories that modules should be
+ * searched in. This is in addition to the standard load path and the
+ * directories in AUGEAS_LENS_LIB
+ *
+ * FLAGS is a bitmask made up of values from AUG_FLAGS.
  */
 VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
@@ -188,7 +198,16 @@ VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(c_augeas, NULL, augeas_close, aug);
+    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+}
+
+VALUE augeas_close (VALUE s) {
+    augeas *aug = aug_handle(s);
+
+    aug_close(aug);
+    DATA_PTR(s) = NULL;
+
+    return Qnil;
 }
 
 void Init__augeas() {
@@ -214,6 +233,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "match", augeas_match, 1);
     rb_define_method(c_augeas, "save", augeas_save, 0);
     rb_define_method(c_augeas, "set", augeas_set, 2);
+    rb_define_method(c_augeas, "close", augeas_close, 0);
 }
 
 /*

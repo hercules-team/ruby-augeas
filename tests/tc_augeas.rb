@@ -28,4 +28,18 @@ class TestAugeas < Test::Unit::TestCase
             Augeas.new
         end
     end
+
+    def test_close
+        aug = Augeas::open("/tmp", nil, Augeas::SAVE_NEWFILE)
+        assert_equal("newfile", aug.get("/augeas/save"))
+        aug.close
+
+        assert_raise(SystemCallError) {
+            aug.get("/augeas/save")
+        }
+
+        assert_raise(SystemCallError) {
+            aug.close
+        }
+    end
 end

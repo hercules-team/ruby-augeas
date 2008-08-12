@@ -1,3 +1,22 @@
 = Ruby bindings for augeas
 
-The class Augeas provides bindings to augeas [http://augeas.net] library
+The class Augeas provides bindings to augeas [http://augeas.net] library.
+
+== Usage: Setting Data
+    aug = Augeas.open("/", "", 0)
+    aug.set("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT", "YES")
+    aug.save()
+    aug.close()
+
+== Usage: Accessing Data
+    aug = Augeas.open("/", "", 0)
+    aug.get("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT")
+    aug.close
+
+== Usage: Removing Data
+    aug = Augeas.open("/", "", 0)
+    aug.rm("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT")
+    aug.save()
+    aug.close
+
+
