@@ -114,6 +114,25 @@ VALUE augeas_insert(VALUE s, VALUE path, VALUE label, VALUE before) {
 
 /*
  * call-seq:
+ *   mv(SRC, DST) -> int
+ *
+ * Move the node SRC to DST. SRC must match exactly one node in the
+ * tree. DST must either match exactly one node in the tree, or may not
+ * exist yet. If DST exists already, it and all its descendants are
+ * deleted. If DST does not exist yet, it and all its missing ancestors are
+ * created.
+ */
+VALUE augeas_mv(VALUE s, VALUE src, VALUE dst) {
+    augeas *aug = aug_handle(s);
+    const char *csrc = StringValueCStr(src);
+    const char *cdst = StringValueCStr(dst);
+    int r = aug_mv(aug, csrc, cdst);
+
+    return INT2FIX(r);
+}
+
+/*
+ * call-seq:
  *   rm(PATH) -> int
  *
  * Remove path and all its children. Returns the number of entries removed
@@ -229,6 +248,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "get", augeas_get, 1);
     rb_define_method(c_augeas, "exists", augeas_exists, 1);
     rb_define_method(c_augeas, "insert", augeas_insert, 3);
+    rb_define_method(c_augeas, "mv", augeas_mv, 2);
     rb_define_method(c_augeas, "rm", augeas_rm, 1);
     rb_define_method(c_augeas, "match", augeas_match, 1);
     rb_define_method(c_augeas, "save", augeas_save, 0);

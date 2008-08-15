@@ -42,4 +42,12 @@ class TestAugeas < Test::Unit::TestCase
             aug.close
         }
     end
+
+    def test_mv
+        aug = Augeas::open("/dev/null", nil, 0)
+        aug.set("/a/b", "value")
+        aug.mv("/a", "/x/y")
+        assert_equal("value", aug.get("/x/y/b"))
+        aug.close
+    end
 end
