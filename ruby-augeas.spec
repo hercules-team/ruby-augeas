@@ -9,13 +9,14 @@ Group:          Development/Languages
 
 License:        LGPLv2+
 URL:            http://augeas.net
-Source0:        ruby-augeas-@VERSION@.tgz
+Source0:        http://augeas.net/download/ruby/ruby-augeas-%{version}.tgz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby ruby-devel rubygem(rake)
 BuildRequires:  augeas-devel >= 0.0.6
 BuildRequires:  pkgconfig
 Requires:       ruby(abi) = 1.8
+Requires:       augeas-libs >= 0.3.0
 Provides:       ruby(augeas) = %{version}
 
 %description
@@ -51,6 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Aug 26 2008 David Lutterkort <dlutter@redhat.com> - 0.2.0-1
+- New version
+
 * Fri May  9 2008 David Lutterkort <dlutter@redhat.com> - 0.1.0-1
 - Fixed up in accordance with Fedora guidelines
 

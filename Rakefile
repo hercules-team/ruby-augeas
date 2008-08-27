@@ -15,7 +15,7 @@ require 'rake/gempackagetask'
 
 PKG_NAME='ruby-augeas'
 GEM_NAME=PKG_NAME # we'd like 'augeas' but that makes RPM fail
-PKG_VERSION='0.1.0'
+PKG_VERSION='0.2.0'
 EXT_CONF='ext/augeas/extconf.rb'
 MAKEFILE="ext/augeas/Makefile"
 AUGEAS_MODULE="ext/augeas/_augeas.so"
