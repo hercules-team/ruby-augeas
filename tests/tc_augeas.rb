@@ -50,4 +50,12 @@ class TestAugeas < Test::Unit::TestCase
         assert_equal("value", aug.get("/x/y"))
         aug.close
     end
+
+    def test_load
+        aug = Augeas::open(nil, nil, 0)
+        aug.rm("/augeas/load/*");
+        assert_nothing_raised {
+            aug.load
+        }
+    end
 end

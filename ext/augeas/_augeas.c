@@ -194,6 +194,25 @@ VALUE augeas_save(VALUE s) {
 
 /*
  * call-seq:
+ *       load() -> boolean
+ *
+ * Write all pending changes to disk
+ */
+VALUE augeas_load(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int callValue = aug_load(aug);
+    VALUE returnValue ;
+
+    if (callValue == 0)
+        returnValue = Qtrue ;
+    else
+        returnValue = Qfalse ;
+
+    return returnValue ;
+}
+
+/*
+ * call-seq:
  *       open(ROOT, LOADPATH, FLAGS) -> Augeas
  *
  * Create a new Augeas instance and return it.
@@ -252,6 +271,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "rm", augeas_rm, 1);
     rb_define_method(c_augeas, "match", augeas_match, 1);
     rb_define_method(c_augeas, "save", augeas_save, 0);
+    rb_define_method(c_augeas, "load", augeas_save, 0);
     rb_define_method(c_augeas, "set", augeas_set, 2);
     rb_define_method(c_augeas, "close", augeas_close, 0);
 }
