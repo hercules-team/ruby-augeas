@@ -260,6 +260,8 @@ void Init__augeas() {
     DEF_AUG_FLAG(SAVE_BACKUP);
     DEF_AUG_FLAG(SAVE_NEWFILE);
     DEF_AUG_FLAG(TYPE_CHECK);
+    DEF_AUG_FLAG(NO_STDINC);
+    DEF_AUG_FLAG(NO_LOAD);
 #undef DEF_AUG_FLAG
 
     /* Define the methods */
