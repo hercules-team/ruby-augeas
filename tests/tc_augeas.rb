@@ -1,14 +1,22 @@
 require 'test/unit'
 
-$:.unshift(File::join(File::dirname(__FILE__), "..", "lib"))
-$:.unshift(File::join(File::dirname(__FILE__), "..", "ext", "augeas"))
+TOPDIR = File::expand_path(File::join(File::dirname(__FILE__), ".."))
+
+$:.unshift(File::join(TOPDIR, "lib"))
+$:.unshift(File::join(TOPDIR, "ext", "augeas"))
+
 require 'augeas'
+require 'fileutils'
 
 class TestAugeas < Test::Unit::TestCase
+
+    SRC_ROOT = File::expand_path(File::join(TOPDIR, "tests", "root")) + "/."
+    TST_ROOT = File::expand_path(File::join(TOPDIR, "build", "root")) + "/"
+
     def test_basics
-        aug = Augeas::open("/tmp", nil, Augeas::SAVE_NEWFILE)
+        aug = aug_open(Augeas::SAVE_NEWFILE)
         assert_equal("newfile", aug.get("/augeas/save"))
-        assert_equal("/tmp/", aug.get("/augeas/root"))
+        assert_equal(TST_ROOT, aug.get("/augeas/root"))
 
         assert(aug.exists("/augeas/root"))
         assert_not_nil(aug.get("/augeas/root"))
@@ -52,10 +60,23 @@ class TestAugeas < Test::Unit::TestCase
     end
 
     def test_load
-        aug = Augeas::open(nil, nil, 0)
+        aug = aug_open(0)
         aug.rm("/augeas/load/*");
         assert_nothing_raised {
             aug.load
         }
+        assert_equal(["/files/etc/hosts", "/files/etc/inittab"],
+                     aug.match("/files/etc/*"))
+    end
+
+    private
+    def aug_open(flags = Augeas::NONE)
+        if File::directory?(TST_ROOT)
+            FileUtils::rm_rf(TST_ROOT)
+        end
+        FileUtils::mkdir_p(TST_ROOT)
+        FileUtils::cp_r(SRC_ROOT, TST_ROOT)
+
+        Augeas::open(TST_ROOT, nil, flags)
     end
 end
