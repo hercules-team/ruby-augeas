@@ -26,4 +26,34 @@ require "_augeas"
 class Augeas
     private_class_method :new
 
+    # Clear all transforms under <tt>/augeas/load</tt>. If +load+
+    # is called right after this, there will be no files
+    # under +/files+
+    def clear_transforms
+        rm("/augeas/load/*")
+    end
+
+    # Add a transform under <tt>/augeas/load</tt>
+    #
+    # The HASH can contain the following entries
+    # * <tt>:lens</tt> - the name of the lens to use
+    # * <tt>:name</tt> - a unique name; use the module name of the LENS when omitted
+    # * <tt>:incl</tt> - a list of glob patterns for the files to transform
+    # * <tt>:excl</tt> - a list of the glob patterns to remove from the list that matches <tt>:INCL</tt>
+    def transform(hash)
+        lens = hash[:lens]
+        name = hash[:name]
+        incl = hash[:incl]
+        excl = hash[:excl] || ""
+        raise ArgumentError, "No lens specified" unless lens
+        raise ArgumentError, "No files to include" unless incl
+        name = lens.split(".")[0].sub("@", "") unless name
+        incl = [ incl ] unless incl.is_a?(Array)
+        excl = [ excl ] unless incl.is_a?(Array)
+
+        xfm = "/augeas/load/#{name}/"
+        set(xfm + "lens", lens)
+        incl.each { |inc| set(xfm + "incl[last()+1]", inc) }
+        excl.each { |exc| set(xfm + "excl[last()+1]", exc) }
+    end
 end

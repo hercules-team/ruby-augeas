@@ -60,13 +60,40 @@ class TestAugeas < Test::Unit::TestCase
     end
 
     def test_load
-        aug = aug_open(0)
+        aug = aug_open(Augeas::NO_LOAD)
+        assert_equal([], aug.match("/files/etc/*"))
         aug.rm("/augeas/load/*");
         assert_nothing_raised {
             aug.load
         }
+        assert_equal([], aug.match("/files/etc/*"))
+    end
+
+    def test_transform
+        aug = aug_open(Augeas::NO_LOAD)
+        aug.clear_transforms
+        aug.transform(:lens => "Hosts.lns",
+                      :incl => "/etc/hosts")
+        assert_raise(ArgumentError) {
+            aug.transform(:name => "Fstab",
+                          :incl => [ "/etc/fstab" ],
+                          :excl => [ "*~", "*.rpmnew" ])
+        }
+        aug.transform(:lens => "Inittab.lns",
+                      :incl => "/etc/inittab")
+        aug.transform(:lens => "Fstab.lns",
+                      :incl => "/etc/fstab*",
+                      :excl => "*~")
+        assert_equal(["/augeas/load/Fstab", "/augeas/load/Fstab/excl",
+                      "/augeas/load/Fstab/incl", "/augeas/load/Fstab/lens",
+                      "/augeas/load/Hosts", "/augeas/load/Hosts/incl",
+                      "/augeas/load/Hosts/lens", "/augeas/load/Inittab",
+                      "/augeas/load/Inittab/incl",
+                      "/augeas/load/Inittab/lens"],
+                     aug.match("/augeas/load//*").sort)
+        aug.load
         assert_equal(["/files/etc/hosts", "/files/etc/inittab"],
-                     aug.match("/files/etc/*"))
+                     aug.match("/files/etc/*").sort)
     end
 
     private
