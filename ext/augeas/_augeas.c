@@ -196,7 +196,7 @@ VALUE augeas_save(VALUE s) {
  * call-seq:
  *       load() -> boolean
  *
- * Write all pending changes to disk
+ * Load files from disk according to the transforms under +/augeas/load+
  */
 VALUE augeas_load(VALUE s) {
     augeas *aug = aug_handle(s);
@@ -273,7 +273,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "rm", augeas_rm, 1);
     rb_define_method(c_augeas, "match", augeas_match, 1);
     rb_define_method(c_augeas, "save", augeas_save, 0);
-    rb_define_method(c_augeas, "load", augeas_save, 0);
+    rb_define_method(c_augeas, "load", augeas_load, 0);
     rb_define_method(c_augeas, "set", augeas_set, 2);
     rb_define_method(c_augeas, "close", augeas_close, 0);
 }
