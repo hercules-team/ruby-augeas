@@ -126,3 +126,7 @@ task :dist => [ :rpm ] do |t|
     system "hg commit -m 'Released version #{PKG_VERSION}'"
     system "hg tag -m 'Tag release #{PKG_VERSION}' release-#{PKG_VERSION}"
 end
+
+task :sync do |t|
+    system "rsync -rav doc/site/ et:/var/www/sites/augeas.et.redhat.com/docs/ruby/"
+end
