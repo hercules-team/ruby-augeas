@@ -213,6 +213,27 @@ VALUE augeas_load(VALUE s) {
 
 /*
  * call-seq:
+ *   defvar(NAME, EXPR) -> boolean
+ *
+ * Define a variable NAME whose value is the result of evaluating EXPR. If
+ * a variable NAME already exists, its name will be replaced with the
+ * result of evaluating EXPR.
+ *
+ * If EXPR is NULL, the variable NAME will be removed if it is defined.
+ *
+ */
+VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
+    augeas *aug = aug_handle(s);
+    const char *cname = StringValuePtr(name);
+    const char *cexpr = NIL_P(expr) ? NULL : StringValuePtr(expr);
+
+    int r = aug_defvar(aug, cname, cexpr);
+
+    return (r < 0) ? Qfalse : Qtrue;
+}
+
+/*
+ * call-seq:
  *       open(ROOT, LOADPATH, FLAGS) -> Augeas
  *
  * Create a new Augeas instance and return it.
@@ -261,11 +282,13 @@ void Init__augeas() {
     DEF_AUG_FLAG(SAVE_NEWFILE);
     DEF_AUG_FLAG(TYPE_CHECK);
     DEF_AUG_FLAG(NO_STDINC);
+    DEF_AUG_FLAG(SAVE_NOOP);
     DEF_AUG_FLAG(NO_LOAD);
 #undef DEF_AUG_FLAG
 
     /* Define the methods */
     rb_define_singleton_method(c_augeas, "open", augeas_init, 3);
+    rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
     rb_define_method(c_augeas, "get", augeas_get, 1);
     rb_define_method(c_augeas, "exists", augeas_exists, 1);
     rb_define_method(c_augeas, "insert", augeas_insert, 3);

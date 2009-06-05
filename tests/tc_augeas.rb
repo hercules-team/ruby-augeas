@@ -96,6 +96,19 @@ class TestAugeas < Test::Unit::TestCase
                      aug.match("/files/etc/*").sort)
     end
 
+    def test_defvar
+        aug = Augeas::open("/dev/null", nil, 0)
+        aug.set("/a/b", "bval")
+        aug.set("/a/c", "cval")
+        assert aug.defvar("var", "/a/b")
+        assert_equal(["/a/b"], aug.match("$var"))
+        assert aug.defvar("var", nil)
+        assert_raises(SystemCallError) {
+            aug.match("$var")
+        }
+        assert ! aug.defvar("var", "/foo/")
+    end
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)
