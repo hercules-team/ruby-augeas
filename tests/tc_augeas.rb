@@ -20,10 +20,15 @@ class TestAugeas < Test::Unit::TestCase
 
         assert(aug.exists("/augeas/root"))
         assert_not_nil(aug.get("/augeas/root"))
+        node = "/ruby/test/node"
         assert_nothing_raised {
-            aug.set("/ruby/test/node", "value")
+            aug.set(node, "value")
         }
-        assert_equal("value", aug.get("/ruby/test/node"))
+        assert_equal("value", aug.get(node))
+        assert_nothing_raised {
+            aug.clear(node)
+        }
+        assert_equal(nil, aug.get(node))
         m = aug.match("/*")
         ["/augeas", "/ruby"].each do |p|
             assert(m.include?(p))

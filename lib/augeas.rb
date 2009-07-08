@@ -26,6 +26,11 @@ require "_augeas"
 class Augeas
     private_class_method :new
 
+    # Clear the +path+, i.e. make its value +nil+
+    def clear(path)
+        set(path, nil)
+    end
+
     # Clear all transforms under <tt>/augeas/load</tt>. If +load+
     # is called right after this, there will be no files
     # under +/files+
