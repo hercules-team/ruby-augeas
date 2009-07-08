@@ -83,7 +83,7 @@ VALUE augeas_exists(VALUE s, VALUE path) {
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValuePtr(path) ;
-    const char *cvalue = StringValuePtr(value) ;
+    const char *cvalue = NIL_P(value) ? NULL : StringValueCStr(value) ;
 
     int callValue = aug_set(aug, cpath, cvalue) ;
     VALUE returnValue ;
