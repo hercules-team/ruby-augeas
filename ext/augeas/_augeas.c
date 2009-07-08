@@ -47,7 +47,7 @@ static void augeas_free(augeas *aug) {
  */
 VALUE augeas_get(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path);
+    const char *cpath = StringValueCStr(path);
     const char *value;
 
     aug_get(aug, cpath, &value);
@@ -66,7 +66,7 @@ VALUE augeas_get(VALUE s, VALUE path) {
  */
 VALUE augeas_exists(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path);
+    const char *cpath = StringValueCStr(path);
     int ret = aug_get(aug, cpath, NULL);
 
     return (ret == 1) ? Qtrue : Qfalse;
@@ -82,7 +82,7 @@ VALUE augeas_exists(VALUE s, VALUE path) {
  */
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
     augeas *aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path) ;
+    const char *cpath = StringValueCStr(path) ;
     const char *cvalue = NIL_P(value) ? NULL : StringValueCStr(value) ;
 
     int callValue = aug_set(aug, cpath, cvalue) ;
@@ -105,8 +105,8 @@ VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
  */
 VALUE augeas_insert(VALUE s, VALUE path, VALUE label, VALUE before) {
     augeas *aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path) ;
-    const char *clabel = StringValuePtr(label) ;
+    const char *cpath = StringValueCStr(path) ;
+    const char *clabel = StringValueCStr(label) ;
 
     int callValue = aug_insert(aug, cpath, clabel, RTEST(before));
     return INT2FIX(callValue) ;
@@ -139,7 +139,7 @@ VALUE augeas_mv(VALUE s, VALUE src, VALUE dst) {
  */
 VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
     augeas *aug = aug_handle(s);
-    const char *cpath = StringValuePtr(path) ;
+    const char *cpath = StringValueCStr(path) ;
 
     int callValue = aug_rm(aug, cpath) ;
     return INT2FIX(callValue) ;
@@ -154,7 +154,7 @@ VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
  */
 VALUE augeas_match(VALUE s, VALUE p) {
     augeas *aug = aug_handle(s);
-    const char *path = StringValuePtr(p);
+    const char *path = StringValueCStr(p);
     char **matches = NULL;
     int cnt, i;
 
@@ -224,8 +224,8 @@ VALUE augeas_load(VALUE s) {
  */
 VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
     augeas *aug = aug_handle(s);
-    const char *cname = StringValuePtr(name);
-    const char *cexpr = NIL_P(expr) ? NULL : StringValuePtr(expr);
+    const char *cname = StringValueCStr(name);
+    const char *cexpr = NIL_P(expr) ? NULL : StringValueCStr(expr);
 
     int r = aug_defvar(aug, cname, cexpr);
 
