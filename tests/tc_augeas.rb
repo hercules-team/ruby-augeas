@@ -115,6 +115,12 @@ class TestAugeas < Test::Unit::TestCase
         end
     end
 
+    def test_defnode
+        aug = aug_open
+        assert aug.defnode("x", "/files/etc/hosts/*[ipaddr = '127.0.0.1']", nil)
+        assert_equal(["/files/etc/hosts/1"], aug.match("$x"))
+    end
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)

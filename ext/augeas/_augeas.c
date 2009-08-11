@@ -232,6 +232,35 @@ VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
     return (r < 0) ? Qfalse : Qtrue;
 }
 
+/*
+ * call-seq:
+ *   defnode(NAME, EXPR, VALUE) -> boolean
+ *
+ * Define a variable NAME whose value is the result of evaluating EXPR,
+ * which must be non-NULL and evaluate to a nodeset. If a variable NAME
+ * already exists, its name will be replaced with the result of evaluating
+ * EXPR.
+ *
+ * If EXPR evaluates to an empty nodeset, a node is created, equivalent to
+ * calling AUG_SET(AUG, EXPR, VALUE) and NAME will be the nodeset containing
+ * that single node.
+ *
+ * Returns +false+ if +aug_defnode+ fails, and the number of nodes in the
+ * nodeset on success.
+ */
+VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
+    augeas *aug = aug_handle(s);
+    const char *cname = StringValueCStr(name);
+    const char *cexpr = NIL_P(expr) ? NULL : StringValueCStr(expr);
+    const char *cvalue = NIL_P(value) ? NULL : StringValueCStr(value);
+
+    /* FIXME: Figure out a way to return created, maybe accept a block
+       that gets run when created == 1 ? */
+    int r = aug_defnode(aug, cname, cexpr, cvalue, NULL);
+
+    return (r < 0) ? Qfalse : INT2NUM(r);
+}
+
 VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
     const char *root = (r == Qnil) ? NULL : StringValueCStr(r);
@@ -275,6 +304,7 @@ void Init__augeas() {
     /* Define the methods */
     rb_define_singleton_method(c_augeas, "open3", augeas_init, 3);
     rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
+    rb_define_method(c_augeas, "defnode", augeas_defnode, 3);
     rb_define_method(c_augeas, "get", augeas_get, 1);
     rb_define_method(c_augeas, "exists", augeas_exists, 1);
     rb_define_method(c_augeas, "insert", augeas_insert, 3);
