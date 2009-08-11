@@ -24,6 +24,9 @@
 
 static VALUE c_augeas;
 
+#define StringValueCStrOrNull(v)                \
+    NIL_P(v) ? NULL : StringValueCStr(v)
+
 static augeas *aug_handle(VALUE s) {
     augeas *aug;
 
@@ -83,7 +86,7 @@ VALUE augeas_exists(VALUE s, VALUE path) {
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path) ;
-    const char *cvalue = NIL_P(value) ? NULL : StringValueCStr(value) ;
+    const char *cvalue = StringValueCStrOrNull(value) ;
 
     int callValue = aug_set(aug, cpath, cvalue) ;
     VALUE returnValue ;
@@ -225,7 +228,7 @@ VALUE augeas_load(VALUE s) {
 VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
     augeas *aug = aug_handle(s);
     const char *cname = StringValueCStr(name);
-    const char *cexpr = NIL_P(expr) ? NULL : StringValueCStr(expr);
+    const char *cexpr = StringValueCStrOrNull(expr);
 
     int r = aug_defvar(aug, cname, cexpr);
 
@@ -251,8 +254,8 @@ VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
 VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
     augeas *aug = aug_handle(s);
     const char *cname = StringValueCStr(name);
-    const char *cexpr = NIL_P(expr) ? NULL : StringValueCStr(expr);
-    const char *cvalue = NIL_P(value) ? NULL : StringValueCStr(value);
+    const char *cexpr = StringValueCStrOrNull(expr);
+    const char *cvalue = StringValueCStrOrNull(value);
 
     /* FIXME: Figure out a way to return created, maybe accept a block
        that gets run when created == 1 ? */
@@ -263,8 +266,8 @@ VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
 
 VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
-    const char *root = (r == Qnil) ? NULL : StringValueCStr(r);
-    const char *loadpath = (l == Qnil) ? NULL : StringValueCStr(l);
+    const char *root = StringValueCStrOrNull(r);
+    const char *loadpath = StringValueCStrOrNull(l);
     augeas *aug = NULL;
 
     aug = aug_init(root, loadpath, flags);
