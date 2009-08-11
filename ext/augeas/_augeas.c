@@ -269,6 +269,7 @@ void Init__augeas() {
     DEF_AUG_FLAG(NO_STDINC);
     DEF_AUG_FLAG(SAVE_NOOP);
     DEF_AUG_FLAG(NO_LOAD);
+    DEF_AUG_FLAG(NO_MODL_AUTOLOAD);
 #undef DEF_AUG_FLAG
 
     /* Define the methods */
