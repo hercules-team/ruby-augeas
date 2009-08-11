@@ -232,21 +232,6 @@ VALUE augeas_defvar(VALUE s, VALUE name, VALUE expr) {
     return (r < 0) ? Qfalse : Qtrue;
 }
 
-/*
- * call-seq:
- *       open(ROOT, LOADPATH, FLAGS) -> Augeas
- *
- * Create a new Augeas instance and return it.
- *
- * Use ROOT as the filesystem root. If ROOT is NULL, use the value of the
- * environment variable AUGEAS_ROOT. If that doesn't exist eitehr, use "/".
- *
- * LOADPATH is a colon-spearated list of directories that modules should be
- * searched in. This is in addition to the standard load path and the
- * directories in AUGEAS_LENS_LIB
- *
- * FLAGS is a bitmask made up of values from AUG_FLAGS.
- */
 VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
     const char *root = (r == Qnil) ? NULL : StringValueCStr(r);
@@ -287,7 +272,7 @@ void Init__augeas() {
 #undef DEF_AUG_FLAG
 
     /* Define the methods */
-    rb_define_singleton_method(c_augeas, "open", augeas_init, 3);
+    rb_define_singleton_method(c_augeas, "open3", augeas_init, 3);
     rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
     rb_define_method(c_augeas, "get", augeas_get, 1);
     rb_define_method(c_augeas, "exists", augeas_exists, 1);

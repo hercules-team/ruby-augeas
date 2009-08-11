@@ -57,11 +57,11 @@ class TestAugeas < Test::Unit::TestCase
     end
 
     def test_mv
-        aug = Augeas::open("/dev/null", nil, 0)
-        aug.set("/a/b", "value")
-        aug.mv("/a/b", "/x/y")
-        assert_equal("value", aug.get("/x/y"))
-        aug.close
+        Augeas::open("/dev/null") do |aug|
+            aug.set("/a/b", "value")
+            aug.mv("/a/b", "/x/y")
+            assert_equal("value", aug.get("/x/y"))
+        end
     end
 
     def test_load
@@ -102,16 +102,17 @@ class TestAugeas < Test::Unit::TestCase
     end
 
     def test_defvar
-        aug = Augeas::open("/dev/null", nil, 0)
-        aug.set("/a/b", "bval")
-        aug.set("/a/c", "cval")
-        assert aug.defvar("var", "/a/b")
-        assert_equal(["/a/b"], aug.match("$var"))
-        assert aug.defvar("var", nil)
-        assert_raises(SystemCallError) {
-            aug.match("$var")
-        }
-        assert ! aug.defvar("var", "/foo/")
+        Augeas::open("/dev/null") do |aug|
+            aug.set("/a/b", "bval")
+            aug.set("/a/c", "cval")
+            assert aug.defvar("var", "/a/b")
+            assert_equal(["/a/b"], aug.match("$var"))
+            assert aug.defvar("var", nil)
+            assert_raises(SystemCallError) {
+                aug.match("$var")
+            }
+            assert ! aug.defvar("var", "/foo/")
+        end
     end
 
     private

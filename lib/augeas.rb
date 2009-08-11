@@ -26,6 +26,36 @@ require "_augeas"
 class Augeas
     private_class_method :new
 
+    # Create a new Augeas instance and return it.
+    #
+    # Use +root+ as the filesystem root. If +root+ is +nil+, use the value
+    # of the environment variable +AUGEAS_ROOT+. If that doesn't exist
+    # either, use "/".
+    #
+    # +loadpath+ is a colon-spearated list of directories that modules
+    # should be searched in. This is in addition to the standard load path
+    # and the directories in +AUGEAS_LENS_LIB+
+    #
+    # +flags+ is a bitmask (see <tt>enum aug_flags</tt>)
+    #
+    # When a block is given, the Augeas instance is passed as the only
+    # argument into the block and closed when the block exits. In that
+    # case, the return value of the block is the return value of
+    # +open+. With no block, the Augeas instance is returned.
+    def self.open(root = nil, loadpath = nil, flags = NONE, &block)
+        aug = open3(root, loadpath, flags)
+        if block_given?
+            begin
+                rv = yield aug
+                return rv
+            ensure
+                aug.close
+            end
+        else
+            return aug
+        end
+    end
+
     # Clear the +path+, i.e. make its value +nil+
     def clear(path)
         set(path, nil)
