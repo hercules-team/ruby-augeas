@@ -121,6 +121,17 @@ class TestAugeas < Test::Unit::TestCase
         assert_equal(["/files/etc/hosts/1"], aug.match("$x"))
     end
 
+    def test_save!
+        aug = aug_open
+        aug.set("/files/etc/hosts/1/garbage", "trash")
+        assert_raises(Augeas::Error) { aug.save! }
+    end
+
+    def test_set!
+        aug = aug_open
+        assert_raises(Augeas::Error) { aug.set!("files/etc/hosts/*", nil) }
+    end
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)

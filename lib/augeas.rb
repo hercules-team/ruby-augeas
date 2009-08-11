@@ -26,6 +26,8 @@ require "_augeas"
 class Augeas
     private_class_method :new
 
+    class Error < RuntimeError; end
+
     # Create a new Augeas instance and return it.
     #
     # Use +root+ as the filesystem root. If +root+ is +nil+, use the value
@@ -90,5 +92,20 @@ class Augeas
         set(xfm + "lens", lens)
         incl.each { |inc| set(xfm + "incl[last()+1]", inc) }
         excl.each { |exc| set(xfm + "excl[last()+1]", exc) }
+    end
+
+    # The same as +save+, but raises <tt>Augeas::Error</tt> if saving fails
+    def save!
+        raise Augeas::Error unless save
+    end
+
+    # The same as +load+, but raises <tt>Augeas::Error</tt> if loading fails
+    def load!
+        raise Augeas::Error unless load
+    end
+
+    # The same as +set+, but raises <tt>Augeas::Error</tt> if loading fails
+    def set!(path, value)
+        raise Augeas::Error unless set(path, value)
     end
 end
