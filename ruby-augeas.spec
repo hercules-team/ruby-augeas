@@ -13,10 +13,10 @@ Source0:        http://augeas.net/download/ruby/ruby-augeas-%{version}.tgz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby ruby-devel rubygem(rake)
-BuildRequires:  augeas-devel >= 0.0.6
+BuildRequires:  augeas-devel >= 0.5.1
 BuildRequires:  pkgconfig
 Requires:       ruby(abi) = 1.8
-Requires:       augeas-libs >= 0.3.0
+Requires:       augeas-libs >= 0.5.1
 Provides:       ruby(augeas) = %{version}
 
 %description
@@ -46,12 +46,15 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc COPYING README.rdoc
+%doc COPYING README.rdoc NEWS
 %{ruby_sitelib}/augeas.rb
 %{ruby_sitearch}/_augeas.so
 
 
 %changelog
+* Wed Aug 12 2009 David Lutterkort <lutter@redhat.com> - 0.3.0-1
+- New version
+
 * Tue Aug 26 2008 David Lutterkort <dlutter@redhat.com> - 0.2.0-1
 - New version
 

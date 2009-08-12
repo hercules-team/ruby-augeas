@@ -1,0 +1,12 @@
+0.3.0 - 2009-08-12
+  - Require augeas >= 0.5.1
+  - Bindings for aug_load, aug_defvar, and aug_defnode
+  - Map flags AUG_NO_STDINC, AUG_NO_LOAD, AUG_NO_MODL_AUTOLOAD
+  - Augeas::transform: convenience method for setting up transforms
+  - Augeas::set: allow passing in nil as the value
+  - Augeas::open: make args optional, accept block
+  - Exception raising versions of set, load, and save
+
+0.2.0 - 2008-08-26
+  Details for this and earlier releases need to be extracted from the
+  history of the git repo
