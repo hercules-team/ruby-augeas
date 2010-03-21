@@ -316,7 +316,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "match", augeas_match, 1);
     rb_define_method(c_augeas, "save", augeas_save, 0);
     rb_define_method(c_augeas, "load", augeas_load, 0);
-    rb_define_method(c_augeas, "set", augeas_set, 2);
+    rb_define_method(c_augeas, "set_internal", augeas_set, 2);
     rb_define_method(c_augeas, "close", augeas_close, 0);
 }
 

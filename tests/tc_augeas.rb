@@ -132,6 +132,29 @@ class TestAugeas < Test::Unit::TestCase
         assert_raises(Augeas::Error) { aug.set!("files/etc/hosts/*", nil) }
     end
 
+    def test_set
+       aug = aug_open
+       aug.set("/files/etc/group/disk/user[last()+1]",["user1","user2"])
+       assert_equal( aug.get("/files/etc/group/disk/user[1]"),"root" )
+       assert_equal( aug.get("/files/etc/group/disk/user[2]"),"user1" )
+       assert_equal( aug.get("/files/etc/group/disk/user[3]"),"user2" )
+
+       aug.set("/files/etc/group/new_group/user[last()+1]",
+	       "nuser1",["nuser2","nuser3"])
+       assert_equal( aug.get("/files/etc/group/new_group/user[1]"),"nuser1")
+       assert_equal( aug.get("/files/etc/group/new_group/user[2]"),"nuser2" )
+       assert_equal( aug.get("/files/etc/group/new_group/user[3]"),"nuser3" )
+
+       aug.rm("/files/etc/group/disk/user")
+       aug.set("/files/etc/group/disk/user[last()+1]","testuser")
+       assert_equal( aug.get("/files/etc/group/disk/user"),"testuser")
+
+       aug.rm("/files/etc/group/disk/user")
+       aug.set("/files/etc/group/disk/user[last()+1]", nil)
+       assert_equal( aug.get("/files/etc/group/disk/user"), nil)
+    end
+
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)
