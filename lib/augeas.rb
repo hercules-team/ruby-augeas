@@ -95,17 +95,15 @@ class Augeas
         lens = hash[:lens]
         name = hash[:name]
         incl = hash[:incl]
-        excl = hash[:excl] || ""
+        excl = hash[:excl]
         raise ArgumentError, "No lens specified" unless lens
         raise ArgumentError, "No files to include" unless incl
         name = lens.split(".")[0].sub("@", "") unless name
-        incl = [ incl ] unless incl.is_a?(Array)
-        excl = [ excl ] unless incl.is_a?(Array)
 
         xfm = "/augeas/load/#{name}/"
-        set_internal(xfm + "lens", lens)
-        incl.each { |inc| set_internal(xfm + "incl[last()+1]", inc) }
-        excl.each { |exc| set_internal(xfm + "excl[last()+1]", exc) }
+        set(xfm + "lens", lens)
+        set(xfm + "incl[last()+1]", incl)
+        set(xfm + "excl[last()+1]", excl) if excl
     end
 
     # The same as +save+, but raises <tt>Augeas::Error</tt> if saving fails
