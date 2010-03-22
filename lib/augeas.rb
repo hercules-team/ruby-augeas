@@ -59,16 +59,15 @@ class Augeas
     end
 
     # Set one or multiple elemens to path.
-    # Multiple elements are mainly sensfull when a path like
-    # .../array[last()+1] is used, since this wil append all
-    # elements.
+    # Multiple elements are mainly sensible with a path like
+    # .../array[last()+1], since this will append all elements.
     def set(path, *values)
-        values.to_a.flatten.each { |v| set_internal(path, v) }
+        values.flatten.each { |v| set_internal(path, v) }
     end
 
     # The same as +set+, but raises <tt>Augeas::Error</tt> if setting fails
     def set!(path, *values)
-	values.flatten.each do |v|
+        values.flatten.each do |v|
             raise Augeas::Error unless set_internal(path, v)
         end
     end
