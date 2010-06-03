@@ -154,6 +154,18 @@ class TestAugeas < Test::Unit::TestCase
        assert_equal( aug.get("/files/etc/group/disk/user"), nil)
     end
 
+    def test_setm
+        aug = aug_open
+
+        aug.setm("/files/etc/group/*[label() =~ regexp(\"rpc.*\")]","users", "testuser1")
+        assert_equal( aug.get("/files/etc/group/rpc/users"), "testuser1")
+        assert_equal( aug.get("/files/etc/group/rpcuser/users"), "testuser1")
+
+        aug.setm("/files/etc/group/*[label() =~ regexp(\"rpc.*\")]/users",nil, "testuser2")
+        assert_equal( aug.get("/files/etc/group/rpc/users"), "testuser2")
+        assert_equal( aug.get("/files/etc/group/rpcuser/users"), "testuser2")
+    end
+
 
     private
     def aug_open(flags = Augeas::NONE)

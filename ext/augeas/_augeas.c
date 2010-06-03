@@ -101,6 +101,25 @@ VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
 
 /*
  * call-seq:
+ *   setm(BASE, SUB, VALUE) -> boolean
+ *
+ *  Set multiple nodes in one operation. Find or create a node matching
+ *  SUB by interpreting SUB as a path expression relative to each node
+ *  matching BASE. SUB may be NULL, in which case all the nodes matching
+ *  BASE will be modified.
+ */
+VALUE augeas_setm(VALUE s, VALUE base, VALUE sub, VALUE value) {
+    augeas *aug = aug_handle(s);
+    const char *cbase = StringValueCStr(base) ;
+    const char *csub = StringValueCStrOrNull(sub) ;
+    const char *cvalue = StringValueCStrOrNull(value) ;
+
+    int callValue = aug_setm(aug, cbase, csub, cvalue) ;
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
  *   insert(PATH, LABEL, BEFORE) -> int
  *
  * Make LABEL a sibling of PATH by inserting it directly before or after PATH.
@@ -317,6 +336,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "save", augeas_save, 0);
     rb_define_method(c_augeas, "load", augeas_load, 0);
     rb_define_method(c_augeas, "set_internal", augeas_set, 2);
+    rb_define_method(c_augeas, "setm", augeas_setm, 3);
     rb_define_method(c_augeas, "close", augeas_close, 0);
 }
 
