@@ -1,3 +1,9 @@
+0.4.0 - 2011-03-25
+  - set can now set multiple elements at once
+  - expose aug_setm as Augeas#setm
+  - expose error functions through Augeas#error
+  - expose aug_span as Augeas#span
+
 0.3.0 - 2009-08-12
   - Require augeas >= 0.5.1
   - Bindings for aug_load, aug_defvar, and aug_defnode
