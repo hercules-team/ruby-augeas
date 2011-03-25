@@ -123,8 +123,8 @@ task :dist => [ :rpm ] do |t|
         break
     end
     puts "Commit and tag #{PKG_VERSION}"
-    system "hg commit -m 'Released version #{PKG_VERSION}'"
-    system "hg tag -m 'Tag release #{PKG_VERSION}' release-#{PKG_VERSION}"
+    system "git commit -a -m 'Released version #{PKG_VERSION}'"
+    system "git tag -s -m 'Tag release #{PKG_VERSION}' release-#{PKG_VERSION}"
 end
 
 task :sync do |t|
