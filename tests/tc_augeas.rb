@@ -166,6 +166,17 @@ class TestAugeas < Test::Unit::TestCase
         assert_equal( aug.get("/files/etc/group/rpcuser/users"), "testuser2")
     end
 
+    def test_error
+        aug = aug_open
+
+        # Cause an error
+        aug.get("/files/etc/hosts/*")
+        err = aug.error
+        assert_equal(Augeas::EMMATCH, err[:code])
+        assert err[:message]
+        assert err[:details]
+        assert err[:minor].nil?
+    end
 
     private
     def aug_open(flags = Augeas::NONE)

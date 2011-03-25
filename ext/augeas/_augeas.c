@@ -305,6 +305,43 @@ VALUE augeas_close (VALUE s) {
     return Qnil;
 }
 
+/*
+ * call-seq:
+ *   error -> HASH
+ *
+ * Retrieve details about the last error encountered and return those
+ * details in a HASH with the following entries:
+ * - :code    error code from +aug_error+
+ * - :message error message from +aug_error_message+
+ * - :minor   minor error message from +aug_minor_error_message+
+ * - :details error details from +aug_error_details+
+ */
+VALUE augeas_error(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int code;
+    const char *msg;
+    VALUE result;
+
+    result = rb_hash_new();
+
+    code = aug_error(aug);
+    rb_hash_aset(result, ID2SYM(rb_intern("code")), INT2NUM(code));
+
+    msg = aug_error_message(aug);
+    if (msg != NULL)
+        rb_hash_aset(result, ID2SYM(rb_intern("message")), rb_str_new2(msg));
+
+    msg = aug_error_minor_message(aug);
+    if (msg != NULL)
+        rb_hash_aset(result, ID2SYM(rb_intern("minor")), rb_str_new2(msg));
+
+    msg = aug_error_details(aug);
+    if (msg != NULL)
+        rb_hash_aset(result, ID2SYM(rb_intern("details")), rb_str_new2(msg));
+
+    return result;
+}
+
 void Init__augeas() {
 
     /* Define the ruby class */
@@ -323,6 +360,20 @@ void Init__augeas() {
     DEF_AUG_FLAG(NO_MODL_AUTOLOAD);
 #undef DEF_AUG_FLAG
 
+    /* Constants for enum aug_errcode_t */
+#define DEF_AUG_ERR(name) \
+    rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
+    DEF_AUG_ERR(NOERROR);
+    DEF_AUG_ERR(ENOMEM);
+    DEF_AUG_ERR(EINTERNAL);
+    DEF_AUG_ERR(EPATHX);
+    DEF_AUG_ERR(ENOMATCH);
+    DEF_AUG_ERR(EMMATCH);
+    DEF_AUG_ERR(ESYNTAX);
+    DEF_AUG_ERR(ENOLENS);
+    DEF_AUG_ERR(EMXFM);
+#undef DEF_AUG_ERR
+
     /* Define the methods */
     rb_define_singleton_method(c_augeas, "open3", augeas_init, 3);
     rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
@@ -338,6 +389,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "set_internal", augeas_set, 2);
     rb_define_method(c_augeas, "setm", augeas_setm, 3);
     rb_define_method(c_augeas, "close", augeas_close, 0);
+    rb_define_method(c_augeas, "error", augeas_error, 0);
 }
 
 /*
