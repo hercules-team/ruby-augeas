@@ -305,6 +305,10 @@ VALUE augeas_close (VALUE s) {
     return Qnil;
 }
 
+static void hash_set(VALUE hash, const char *sym, VALUE v) {
+    rb_hash_aset(hash, ID2SYM(rb_intern(sym)), v);
+}
+
 /*
  * call-seq:
  *   error -> HASH
@@ -325,19 +329,56 @@ VALUE augeas_error(VALUE s) {
     result = rb_hash_new();
 
     code = aug_error(aug);
-    rb_hash_aset(result, ID2SYM(rb_intern("code")), INT2NUM(code));
+    hash_set(result, "code", INT2NUM(code));
 
     msg = aug_error_message(aug);
     if (msg != NULL)
-        rb_hash_aset(result, ID2SYM(rb_intern("message")), rb_str_new2(msg));
+        hash_set(result, "message", rb_str_new2(msg));
 
     msg = aug_error_minor_message(aug);
     if (msg != NULL)
-        rb_hash_aset(result, ID2SYM(rb_intern("minor")), rb_str_new2(msg));
+        hash_set(result, "minor", rb_str_new2(msg));
 
     msg = aug_error_details(aug);
     if (msg != NULL)
-        rb_hash_aset(result, ID2SYM(rb_intern("details")), rb_str_new2(msg));
+        hash_set(result, "details", rb_str_new2(msg));
+
+    return result;
+}
+
+static void hash_set_range(VALUE hash, const char *sym,
+                           unsigned int start, unsigned int end) {
+    VALUE r;
+
+    r = rb_range_new(INT2NUM(start), INT2NUM(end), 0);
+    hash_set(hash, sym, r);
+}
+
+VALUE augeas_span(VALUE s, VALUE path) {
+    augeas *aug = aug_handle(s);
+    char *cpath = StringValueCStr(path);
+    char *filename = NULL;
+    unsigned int label_start, label_end, value_start, value_end,
+        span_start, span_end;
+    int r;
+    VALUE result;
+
+    r = aug_span(aug, cpath,
+                 &filename,
+                 &label_start, &label_end,
+                 &value_start, &value_end,
+                 &span_start, &span_end);
+
+    result = rb_hash_new();
+
+    if (r == 0) {
+        hash_set(result, "filename", rb_str_new2(filename));
+        hash_set_range(result, "label", label_start, label_end);
+        hash_set_range(result, "value", value_start, value_end);
+        hash_set_range(result, "span", span_start, span_end);
+    }
+
+    free(filename);
 
     return result;
 }
@@ -358,6 +399,7 @@ void Init__augeas() {
     DEF_AUG_FLAG(SAVE_NOOP);
     DEF_AUG_FLAG(NO_LOAD);
     DEF_AUG_FLAG(NO_MODL_AUTOLOAD);
+    DEF_AUG_FLAG(ENABLE_SPAN);
 #undef DEF_AUG_FLAG
 
     /* Constants for enum aug_errcode_t */
@@ -390,6 +432,7 @@ void Init__augeas() {
     rb_define_method(c_augeas, "setm", augeas_setm, 3);
     rb_define_method(c_augeas, "close", augeas_close, 0);
     rb_define_method(c_augeas, "error", augeas_error, 0);
+    rb_define_method(c_augeas, "span", augeas_span, 1);
 }
 
 /*

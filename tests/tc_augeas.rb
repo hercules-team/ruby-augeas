@@ -178,6 +178,23 @@ class TestAugeas < Test::Unit::TestCase
         assert err[:minor].nil?
     end
 
+    def test_span
+        aug = aug_open
+
+        span = aug.span("/files/etc/ssh/sshd_config/Protocol")
+        assert_equal({}, span)
+
+        aug.set("/augeas/span", "enable")
+        aug.rm("/files/etc")
+        aug.load
+
+        span = aug.span("/files/etc/ssh/sshd_config/Protocol")
+        assert_not_nil(span[:filename])
+        assert_equal(29..37, span[:label])
+        assert_equal(38..39, span[:value])
+        assert_equal(29..40, span[:span])
+    end
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)
