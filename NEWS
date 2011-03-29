@@ -1,3 +1,6 @@
+0.4.1 - 2011-03-29
+  - remove object files from release tarball
+
 0.4.0 - 2011-03-25
   - set can now set multiple elements at once
   - expose aug_setm as Augeas#setm
