@@ -91,6 +91,7 @@ SPEC = Gem::Specification.new do |s|
     s.email = "augeas-devel@redhat.com"
     s.homepage = "http://augeas.net/"
     s.summary = "Ruby bindings for augeas"
+    s.authors = [ "Bryan Kearney", "David Lutterkort" ]
     s.files = PKG_FILES
     s.autorequire = "augeas"
     s.required_ruby_version = '>= 1.8.1'
