@@ -14,6 +14,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby ruby-devel rubygem(rake)
 BuildRequires:  augeas-devel >= 0.8.0
+BuildRequires:  libxml2-devel
 BuildRequires:  pkgconfig
 Requires:       ruby(abi) = 1.8
 Requires:       augeas-libs >= 0.8.0

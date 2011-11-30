@@ -27,4 +27,8 @@ unless pkg_config("augeas")
     raise "augeas-devel not installed"
 end
 
+unless pkg_config("libxml-2.0")
+    raise "libxml2-devel not installed"
+end
+
 create_makefile(extension_name)
