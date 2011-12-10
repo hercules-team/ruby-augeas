@@ -468,4 +468,97 @@ class TestAugeas < Test::Unit::TestCase
 
     Augeas::create({:root => TST_ROOT, :loadpath => nil}.merge(flags))
   end
+
+    def test_set!
+        aug = aug_open
+        assert_raises(Augeas::Error) { aug.set!("files/etc/hosts/*", nil) }
+    end
+
+    def test_set
+       aug = aug_open
+       aug.set("/files/etc/group/disk/user[last()+1]",["user1","user2"])
+       assert_equal( aug.get("/files/etc/group/disk/user[1]"),"root" )
+       assert_equal( aug.get("/files/etc/group/disk/user[2]"),"user1" )
+       assert_equal( aug.get("/files/etc/group/disk/user[3]"),"user2" )
+
+       aug.set("/files/etc/group/new_group/user[last()+1]",
+	       "nuser1",["nuser2","nuser3"])
+       assert_equal( aug.get("/files/etc/group/new_group/user[1]"),"nuser1")
+       assert_equal( aug.get("/files/etc/group/new_group/user[2]"),"nuser2" )
+       assert_equal( aug.get("/files/etc/group/new_group/user[3]"),"nuser3" )
+
+       aug.rm("/files/etc/group/disk/user")
+       aug.set("/files/etc/group/disk/user[last()+1]","testuser")
+       assert_equal( aug.get("/files/etc/group/disk/user"),"testuser")
+
+       aug.rm("/files/etc/group/disk/user")
+       aug.set("/files/etc/group/disk/user[last()+1]", nil)
+       assert_equal( aug.get("/files/etc/group/disk/user"), nil)
+    end
+
+    def test_setm
+        aug = aug_open
+
+        aug.setm("/files/etc/group/*[label() =~ regexp(\"rpc.*\")]","users", "testuser1")
+        assert_equal( aug.get("/files/etc/group/rpc/users"), "testuser1")
+        assert_equal( aug.get("/files/etc/group/rpcuser/users"), "testuser1")
+
+        aug.setm("/files/etc/group/*[label() =~ regexp(\"rpc.*\")]/users",nil, "testuser2")
+        assert_equal( aug.get("/files/etc/group/rpc/users"), "testuser2")
+        assert_equal( aug.get("/files/etc/group/rpcuser/users"), "testuser2")
+    end
+
+    def test_error
+        aug = aug_open
+
+        # Cause an error
+        aug.get("/files/etc/hosts/*")
+        err = aug.error
+        assert_equal(Augeas::EMMATCH, err[:code])
+        assert err[:message]
+        assert err[:details]
+        assert err[:minor].nil?
+    end
+
+    def test_span
+        aug = aug_open
+
+        span = aug.span("/files/etc/ssh/sshd_config/Protocol")
+        assert_equal({}, span)
+
+        aug.set("/augeas/span", "enable")
+        aug.rm("/files/etc")
+        aug.load
+
+        span = aug.span("/files/etc/ssh/sshd_config/Protocol")
+        assert_not_nil(span[:filename])
+        assert_equal(29..37, span[:label])
+        assert_equal(38..39, span[:value])
+        assert_equal(29..40, span[:span])
+    end
+
+    def test_srun
+        aug = aug_open
+
+        path = "/files/etc/hosts/*[canonical='localhost.localdomain']/ipaddr"
+        r, out = aug.srun("get #{path}\n")
+        assert_equal(1, r)
+        assert_equal("#{path} = 127.0.0.1\n", out)
+
+        assert_equal(0, aug.srun(" ")[0])
+        assert_equal(-1, aug.srun("foo")[0])
+        assert_equal(-1, aug.srun("set")[0])
+        assert_equal(-2, aug.srun("quit")[0])
+    end
+
+    private
+    def aug_open(flags = Augeas::NONE)
+        if File::directory?(TST_ROOT)
+            FileUtils::rm_rf(TST_ROOT)
+        end
+        FileUtils::mkdir_p(TST_ROOT)
+        FileUtils::cp_r(SRC_ROOT, TST_ROOT)
+
+        Augeas::open(TST_ROOT, nil, flags)
+    end
 end
