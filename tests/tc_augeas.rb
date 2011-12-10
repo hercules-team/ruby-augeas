@@ -195,6 +195,20 @@ class TestAugeas < Test::Unit::TestCase
         assert_equal(29..40, span[:span])
     end
 
+    def test_srun
+        aug = aug_open
+
+        path = "/files/etc/hosts/*[canonical='localhost.localdomain']/ipaddr"
+        r, out = aug.srun("get #{path}\n")
+        assert_equal(1, r)
+        assert_equal("#{path} = 127.0.0.1\n", out)
+
+        assert_equal(0, aug.srun(" ")[0])
+        assert_equal(-1, aug.srun("foo")[0])
+        assert_equal(-1, aug.srun("set")[0])
+        assert_equal(-2, aug.srun("quit")[0])
+    end
+
     private
     def aug_open(flags = Augeas::NONE)
         if File::directory?(TST_ROOT)
