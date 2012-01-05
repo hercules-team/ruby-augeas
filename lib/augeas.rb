@@ -96,6 +96,11 @@ class Augeas
     run_command :augeas_get, path
   end
 
+  # Return true if there is an entry for this path, false otherwise
+  def exists(path)
+    run_command :augeas_exists, path
+  end
+
   # Set one or multiple elements to path.
   # Multiple elements are mainly sensible with a path like
   # .../array[last()+1], since this will append all elements.
@@ -127,6 +132,27 @@ class Augeas
   # Raises an <tt>Augeas::InvalidPathError</tt> when the +path+ is invalid.
   def match(path)
     run_command :augeas_match, path
+  end
+
+  # Evaluate +expr+ and set the variable +name+ to the resulting
+  # nodeset. The variable can be used in path expressions as $name.
+  # Note that +expr+ is evaluated when the variable is defined, not when
+  # it is used.
+  def defvar(name, expr)
+    run_command :augeas_defvar, name, expr
+  end
+
+  # Define the variable +name+ to the result of evaluating +expr+, which
+  # must be a nodeset.  If no node matching +expr+ exists yet, one is
+  # created and +name+ will refer to it.  When a node is created and
+  # +value+ is given, the new node's value is set to +value+.
+  def defnode(name, expr, value=nil)
+    run_command :augeas_defnode, name, expr, value
+  end
+
+  # Clear the +path+, i.e. make its value +nil+
+  def clear(path)
+    augeas_set(path, nil)
   end
 
   # Add a transform under <tt>/augeas/load</tt>
