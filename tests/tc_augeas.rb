@@ -140,7 +140,7 @@ class TestAugeas < Test::Unit::TestCase
     aug = aug_open(Augeas::NO_LOAD)
     aug.transform(:lens => "bad_lens", :incl => "irrelevant")
     assert_raises(Augeas::LensNotFoundError) { aug.load }
-    assert_equal aug.error[:details], "Could not find lens bad_lens"
+    assert_equal aug.error[:details], "Can not find lens bad_lens"
   end
 
   def test_transform
