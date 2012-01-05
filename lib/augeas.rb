@@ -117,6 +117,19 @@ class Augeas
   def match(path)
     run_command :augeas_match, path
   end
+
+  # Write all pending changes to disk.
+  # Raises <tt>Augeas::CommandExecutionError</tt> if saving fails.
+  def save
+    begin
+      run_command :augeas_save
+    rescue Augeas::CommandExecutionError => e
+      raise e, "Saving failed. Search the augeas tree in /augeas//error"+
+        "for the actual errors."
+    end
+
+    nil
+  end
   
   private
 

@@ -243,11 +243,23 @@ VALUE augeas_match_old(VALUE s, VALUE p) {
 
 /*
  * call-seq:
- *       save() -> boolean
+ *       save() -> int
  *
  * Write all pending changes to disk
  */
 VALUE augeas_save(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int callValue = aug_save(aug);
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *       save() -> boolean
+ *
+ * Write all pending changes to disk
+ */
+VALUE augeas_save_old(VALUE s) {
     augeas *aug = aug_handle(s);
     int callValue = aug_save(aug) ;
     VALUE returnValue ;
@@ -593,7 +605,7 @@ void Init__augeas() {
     rb_define_method(c_augeas_old, "mv", augeas_mv, 2);
     rb_define_method(c_augeas_old, "rm", augeas_rm, 1);
     rb_define_method(c_augeas_old, "match", augeas_match_old, 1);
-    rb_define_method(c_augeas_old, "save", augeas_save, 0);
+    rb_define_method(c_augeas_old, "save", augeas_save_old, 0);
     rb_define_method(c_augeas_old, "load", augeas_load, 0);
     rb_define_method(c_augeas_old, "set_internal", augeas_set_old, 2);
     rb_define_method(c_augeas_old, "setm", augeas_setm, 3);

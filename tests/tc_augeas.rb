@@ -165,10 +165,19 @@ class TestAugeas < Test::Unit::TestCase
     assert_raises(Augeas::InvalidPathError) { aug.match('//') }
   end
 
-  def test_save!
+  def test_save
     aug = aug_open
     aug.set("/files/etc/hosts/1/garbage", "trash")
-    assert_raises(Augeas::Error) { aug.save! }
+    assert_raises(Augeas::CommandExecutionError) { aug.save }
+  end
+
+  def test_save_tree_error
+    aug = aug_open(Augeas::NO_LOAD)
+    aug.set("/files/etc/sysconfig/iptables", "bad")
+    assert_raises(Augeas::CommandExecutionError) {aug.save}
+    assert aug.get("/augeas/files/etc/sysconfig/iptables/error")
+    assert_equal("No such file or directory",
+                 aug.get("/augeas/files/etc/sysconfig/iptables/error/message"))
   end
 
   def test_set!
