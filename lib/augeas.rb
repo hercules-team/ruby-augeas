@@ -76,7 +76,7 @@ class Augeas
     return AugeasOld.open(root, loadpath, flags)
   end
 
-  def self.create
-    return Augeas.open
+  def self.create(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
+    return Augeas.open3(nil, nil, Augeas::NONE)
   end
 end
