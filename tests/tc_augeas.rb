@@ -141,6 +141,19 @@ class TestAugeas < Test::Unit::TestCase
                  aug.match("/files/etc/*").sort)
   end
 
+  def test_transform_invalid_path
+    aug = aug_open
+    assert_raises (Augeas::InvalidPathError) {
+      aug.transform :lens => '//', :incl => 'foo' }
+  end
+
+  def test_clear_transforms
+    aug = aug_open
+    assert_not_equal [], aug.match("/augeas/load/*")
+    aug.clear_transforms
+    assert_equal [], aug.match("/augeas/load/*")
+  end
+
   def test_rm
     aug = aug_open
     aug.set("/foo/bar", "baz")
