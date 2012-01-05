@@ -126,5 +126,5 @@ class Augeas
 
     return result
   end
-    
+  
 end
