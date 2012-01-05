@@ -97,6 +97,35 @@ class TestAugeas < Test::Unit::TestCase
     end
   end
 
+  def test_mv_descendent_error
+    aug = aug_open
+    aug.set("/foo", "bar")
+    assert_raises(Augeas::DescendantError) {aug.mv("/foo", "/foo/bar/baz")}
+  end
+
+  def test_mv_multiple_matches_error
+    aug = aug_open
+    aug.set("/foo/bar", "bar")
+    aug.set("/foo/baz", "baz")
+    assert_raises(Augeas::MultipleMatchesError) {aug.mv("/foo/*", "/qux")}
+  end
+
+  def test_mv_invalid_path_error
+    aug = aug_open
+    assert_raises(Augeas::InvalidPathError) {aug.mv("/foo", "[]")}
+  end
+
+  def test_mv_no_match_error
+    aug = aug_open
+    assert_raises(Augeas::NoMatchError) {aug.mv("/nonexistent", "/")}
+  end
+
+  def test_mv_mutiple_dest_error
+    aug = aug_open
+    aug.set("/foo", "bar")
+    assert_raises(Augeas::CommandExecutionError) {aug.mv("/foo", "/bar/baz/*")}
+  end
+
   def test_load
     aug = aug_open(Augeas::NO_LOAD)
     assert_equal([], aug.match("/files/etc/*"))
@@ -187,6 +216,35 @@ class TestAugeas < Test::Unit::TestCase
     assert_equal(["/files/etc/hosts/1"], aug.match("$x"))
   end
 
+  def test_insert_before
+    aug = aug_open
+    aug.set("/parent/child", "foo")
+    aug.insert("/parent/child", "sibling", true)
+    assert_equal ["/parent/sibling", "/parent/child"], aug.match("/parent/*")
+  end
+
+  def test_insert_after
+    aug = aug_open
+    aug.set("/parent/child", "foo")
+    aug.insert("/parent/child", "sibling", false)
+    assert_equal ["/parent/child", "/parent/sibling"], aug.match("/parent/*")
+  end
+
+  def test_insert_no_match
+    aug = aug_open
+    assert_raises (Augeas::NoMatchError) { aug.insert "foo", "bar", "baz" }
+  end
+
+  def test_insert_invalid_path
+    aug = aug_open
+    assert_raises (Augeas::InvalidPathError) { aug.insert "//", "bar", "baz" }
+  end
+
+  def test_insert_too_many_matches
+    aug = aug_open
+    assert_raises (Augeas::MultipleMatchesError) { aug.insert "/*", "a", "b" }
+  end
+
   def test_match
     aug = aug_open
     aug.set("/foo/bar", "baz")
@@ -267,6 +325,11 @@ class TestAugeas < Test::Unit::TestCase
     assert_equal(aug.get("/files/etc/group/rpcuser/users"), "testuser2")
   end
 
+  def test_setm_invalid_path
+    aug = aug_open
+    assert_raises (Augeas::InvalidPathError) { aug.setm("[]", "bar", "baz") }
+  end
+
   def test_get_multiple_matches_error
     aug = aug_open
 
@@ -294,9 +357,6 @@ class TestAugeas < Test::Unit::TestCase
   def test_span
     aug = aug_open
 
-    span = aug.span("/files/etc/ssh/sshd_config/Protocol")
-    assert_equal({}, span)
-
     aug.set("/augeas/span", "enable")
     aug.rm("/files/etc")
     aug.load
@@ -308,7 +368,20 @@ class TestAugeas < Test::Unit::TestCase
     assert_equal(29..40, span[:span])
   end
 
+  def test_span_no_span_info
+    aug = aug_open
+    # this error should be raised because we haven't enabled the span
+    assert_raises(Augeas::NoSpanInfoError) {
+      aug.span("/files/etc/ssh/sshd_config/Protocol") }
+  end
+
+  def test_span_no_matches
+    aug = aug_open
+    assert_raises(Augeas::NoMatchError) { aug.span("bogus") }
+  end
+
   private
+
   def aug_open(flags = Augeas::NONE)
     if File::directory?(TST_ROOT)
       FileUtils::rm_rf(TST_ROOT)

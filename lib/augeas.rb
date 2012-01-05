@@ -103,6 +103,17 @@ class Augeas
     values.flatten.each { |v| run_command :augeas_set, path, v }
   end
 
+  # Set multiple nodes in one operation.  Find or create a node matching SUB
+  # by interpreting SUB as a  path expression relative to each node matching
+  # BASE. If SUB is '.', the nodes matching BASE will be modified.
+
+  # +base+    the base node
+  # +sub+     the subtree relative to the base
+  # +value+   the value for the nodes
+  def setm(base, sub, value)
+    run_command :augeas_setm, base, sub, value
+  end
+
   # Remove all nodes matching path expression +path+ and all their
   # children.
   # Raises an <tt>Augeas::InvalidPathError</tt> when the +path+ is invalid.
@@ -179,6 +190,38 @@ class Augeas
     end
 
     nil
+  end
+
+  # Move node +src+ to +dst+. +src+ must match exactly one node in
+  # the tree. +dst+ must either match exactly one node in the tree,
+  # or may not exist yet. If +dst+ exists already, it and all its
+  # descendants are deleted. If +dst+ does not exist yet, it and all
+  # its missing ancestors are created.
+  #
+  # Raises <tt>Augeas::NoMatchError</tt> if the +src+ node does not exist
+  # Raises <tt>Augeas::MultipleMatchesError</tt> if there were
+  # multiple matches in +src+
+  # Raises <tt>Augeas::DescendantError</tt> if the +dst+ node is a
+  # descendant of the +src+ node.
+  def mv(src, dst)
+    run_command :augeas_mv, src, dst
+  end
+
+  # Get the filename, label and value position in the text of this node
+  #
+  # Raises <tt>Augeas::NoMatchError</tt> if the node could not be found
+  # Raises <tt>Augeas::NoSpanInfo</tt> if the node associated with
+  # +path+ doesn't belong to a file or doesn't exist
+  def span(path)
+    run_command :augeas_span, path
+  end
+
+  # Make +label+ a sibling of +path+ by inserting it directly before
+  # or after +path+.
+  # The boolean +before+ determines if +label+ is inserted before or
+  # after +path+.
+  def insert(path, label, before)
+    run_command :augeas_insert, path, label, before
   end
 
   private
