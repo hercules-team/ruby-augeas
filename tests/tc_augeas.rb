@@ -104,6 +104,19 @@ class TestAugeas < Test::Unit::TestCase
                      aug.match("/files/etc/*").sort)
     end
 
+    def test_rm
+      aug = aug_open
+      aug.set("/foo/bar", "baz")
+      assert aug.get("/foo/bar")
+      assert_equal 2, aug.rm("/foo")
+      assert_nil aug.get("/foo")
+    end
+
+    def test_rm_invalid_path
+      aug = aug_open
+      assert_raises(Augeas::InvalidPathError) { aug.rm('//') }
+    end
+
     def test_defvar
         Augeas::open("/dev/null") do |aug|
             aug.set("/a/b", "bval")
@@ -179,6 +192,30 @@ class TestAugeas < Test::Unit::TestCase
         assert err[:message]
         assert err[:details]
         assert err[:minor].nil?
+    end
+
+    def test_get_multiple_matches_error
+        aug = aug_open
+
+        # Cause an error
+        assert_raises (Augeas::MultipleMatchesError) { 
+            aug.get("/files/etc/hosts/*") }
+        
+        err = aug.error
+        assert_equal(Augeas::EMMATCH, err[:code])
+        assert err[:message]
+        assert err[:details]
+        assert err[:minor].nil?
+    end
+
+    def test_get_invalid_path
+        aug = aug_open
+        assert_raises (Augeas::InvalidPathError) { aug.get("//") }
+
+        err = aug.error
+        assert_equal(Augeas::EPATHX, err[:code])
+        assert err[:message]
+        assert err[:details]
     end
 
     def test_span
@@ -287,6 +324,6 @@ class TestAugeas < Test::Unit::TestCase
         FileUtils::mkdir_p(TST_ROOT)
         FileUtils::cp_r(SRC_ROOT, TST_ROOT)
 
-        Augeas::open(TST_ROOT, nil, flags)
+        Augeas::create(TST_ROOT, nil, flags)
     end
 end

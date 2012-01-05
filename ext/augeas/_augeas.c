@@ -77,13 +77,30 @@ VALUE augeas_exists(VALUE s, VALUE path) {
 
 /*
  * call-seq:
- *   set(PATH, VALUE) -> boolean
+ *   set(PATH, VALUE) -> int
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
  * exist.
  */
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValueCStr(path) ;
+    const char *cvalue = StringValueCStrOrNull(value) ;
+
+    int callValue = aug_set(aug, cpath, cvalue) ;
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *   set(PATH, VALUE) -> boolean
+ *
+ * Set the value associated with PATH to VALUE. VALUE is copied into the
+ * internal data structure. Intermediate entries are created if they don't
+ * exist.
+ */
+VALUE augeas_set_old(VALUE s, VALUE path, VALUE value) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path) ;
     const char *cvalue = StringValueCStrOrNull(value) ;
@@ -549,7 +566,7 @@ void Init__augeas() {
     rb_define_method(c_augeas_old, "match", augeas_match, 1);
     rb_define_method(c_augeas_old, "save", augeas_save, 0);
     rb_define_method(c_augeas_old, "load", augeas_load, 0);
-    rb_define_method(c_augeas_old, "set_internal", augeas_set, 2);
+    rb_define_method(c_augeas_old, "set_internal", augeas_set_old, 2);
     rb_define_method(c_augeas_old, "setm", augeas_setm, 3);
     rb_define_method(c_augeas_old, "close", augeas_close, 0);
     rb_define_method(c_augeas_old, "error", augeas_error, 0);

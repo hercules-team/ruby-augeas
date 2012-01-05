@@ -1,6 +1,7 @@
 ##
 #  augeas.rb: Ruby wrapper for augeas
 #
+#  Copyright (C) 2008 Red Hat Inc.
 #  Copyright (C) 2011 SUSE LINUX Products GmbH, Nuernberg, Germany.
 #
 #  This library is free software; you can redistribute it and/or
@@ -17,7 +18,8 @@
 #  License along with this library; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 #
-# Author: Ionuț Arțăriși <iartarisi@suse.cz>
+# Authors: Ionuț Arțăriși <iartarisi@suse.cz>
+#          Bryan Kearney <bkearney@redhat.com>
 ##
 
 require "_augeas"
@@ -77,6 +79,52 @@ class Augeas
   end
 
   def self.create(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
-    return Augeas.open3(nil, nil, Augeas::NONE)
+    return Augeas.open3(root, loadpath, flags)
   end
+
+  # Get the value associated with +path+.
+  def get(path)
+    run_command :augeas_get, path
+  end
+
+  # Set one or multiple elements to path.
+  # Multiple elements are mainly sensible with a path like
+  # .../array[last()+1], since this will append all elements.
+  def set(path, *values)
+    values.flatten.each { |v| run_command :augeas_set, path, v }
+  end
+
+  # Remove all nodes matching path expression +path+ and all their
+  # children.
+  # Raises an <tt>Augeas::InvalidPathError</tt> when the +path+ is invalid.
+  def rm(path)
+    run_command :augeas_rm, path
+  end
+
+  private
+
+  # Run a command and raise any errors that happen due to execution.
+  #
+  # +cmd+ name of the Augeas command to run
+  # +params+ parameters with which +cmd+ will be called
+  #
+  # Returns whatever the original +cmd+ returns
+  def run_command(cmd, *params)
+    result = self.send cmd, *params
+
+    errcode = error[:code]
+    unless errcode.zero?
+      raise @@error_hash[errcode],
+      "#{error[:message]} #{error[:details]}"
+    end
+
+    if result.kind_of? Fixnum and result < 0
+      # we raise CommandExecutionError here, because this is the error that
+      # augtool raises in this case as well
+      raise CommandExecutionError, "Command failed. Return code was #{result}."
+    end
+
+    return result
+  end
+    
 end
