@@ -24,6 +24,7 @@
 #include <ruby.h>
 #include <augeas.h>
 
+static VALUE c_augeas_old;
 static VALUE c_augeas;
 
 static augeas *aug_handle(VALUE s) {
@@ -282,7 +283,10 @@ VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
     return (r < 0) ? Qfalse : INT2NUM(r);
 }
 
-VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+/* This function returns different names for different augeas API */
+/* version specified in the +version+ argument. See augeas_init_old and */
+/* augeas_init. */
+VALUE augeas_init_split(VALUE m, VALUE r, VALUE l, VALUE f, char version) {
     unsigned int flags = NUM2UINT(f);
     const char *root = StringValueCStrOrNull(r);
     const char *loadpath = StringValueCStrOrNull(l);
@@ -292,8 +296,20 @@ VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    if (version == 0) {
+        return Data_Wrap_Struct(c_augeas_old, NULL, augeas_free, aug);
+    } else {
+        return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    }
 }
+
+VALUE augeas_init_old(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return augeas_init_split(m, r, l, f, 0);
+}
+VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return augeas_init_split(m, r, l, f, 1);
+}
+
 
 VALUE augeas_close (VALUE s) {
     augeas *aug = aug_handle(s);
@@ -487,10 +503,65 @@ VALUE augeas_text_retrieve(VALUE s, VALUE lens, VALUE node_in, VALUE path, VALUE
 
 void Init__augeas() {
 
-    /* Define the ruby class */
-    c_augeas = rb_define_class("Augeas", rb_cObject) ;
+    /* Define the OLD ruby class. DEPRECATED. */
+    c_augeas_old = rb_define_class("AugeasOld", rb_cObject) ;
 
     /* Constants for enum aug_flags */
+#define DEF_AUG_FLAG(name) \
+    rb_define_const(c_augeas_old, #name, INT2NUM(AUG_##name))
+    DEF_AUG_FLAG(NONE);
+    DEF_AUG_FLAG(SAVE_BACKUP);
+    DEF_AUG_FLAG(SAVE_NEWFILE);
+    DEF_AUG_FLAG(TYPE_CHECK);
+    DEF_AUG_FLAG(NO_STDINC);
+    DEF_AUG_FLAG(SAVE_NOOP);
+    DEF_AUG_FLAG(NO_LOAD);
+    DEF_AUG_FLAG(NO_MODL_AUTOLOAD);
+    DEF_AUG_FLAG(ENABLE_SPAN);
+#undef DEF_AUG_FLAG
+
+    /* Constants for enum aug_errcode_t */
+#define DEF_AUG_ERR(name) \
+    rb_define_const(c_augeas_old, #name, INT2NUM(AUG_##name))
+    DEF_AUG_ERR(NOERROR);
+    DEF_AUG_ERR(ENOMEM);
+    DEF_AUG_ERR(EINTERNAL);
+    DEF_AUG_ERR(EPATHX);
+    DEF_AUG_ERR(ENOMATCH);
+    DEF_AUG_ERR(EMMATCH);
+    DEF_AUG_ERR(ESYNTAX);
+    DEF_AUG_ERR(ENOLENS);
+    DEF_AUG_ERR(EMXFM);
+#undef DEF_AUG_ERR
+
+    /* Define the methods */
+    rb_define_singleton_method(c_augeas_old, "open3", augeas_init_old, 3);
+    rb_define_method(c_augeas_old, "defvar", augeas_defvar, 2);
+    rb_define_method(c_augeas_old, "defnode", augeas_defnode, 3);
+    rb_define_method(c_augeas_old, "get", augeas_get, 1);
+    rb_define_method(c_augeas_old, "exists", augeas_exists, 1);
+    rb_define_method(c_augeas_old, "insert", augeas_insert, 3);
+    rb_define_method(c_augeas_old, "mv", augeas_mv, 2);
+    rb_define_method(c_augeas_old, "rm", augeas_rm, 1);
+    rb_define_method(c_augeas_old, "match", augeas_match, 1);
+    rb_define_method(c_augeas_old, "save", augeas_save, 0);
+    rb_define_method(c_augeas_old, "load", augeas_load, 0);
+    rb_define_method(c_augeas_old, "set_internal", augeas_set, 2);
+    rb_define_method(c_augeas_old, "setm", augeas_setm, 3);
+    rb_define_method(c_augeas_old, "close", augeas_close, 0);
+    rb_define_method(c_augeas_old, "error", augeas_error, 0);
+    rb_define_method(c_augeas_old, "span", augeas_span, 1);
+
+
+   /* Define the NEW ruby class
+    *
+    * This class is basically the same as the old one, but uses a
+    * different naming scheme for methods (prefixing everything with
+    * "augeas_"). Also some methods point to different C functions.
+    */
+    c_augeas = rb_define_class("Augeas", rb_cObject) ;
+
+/* Constants for enum aug_flags */
 #define DEF_AUG_FLAG(name) \
     rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
     DEF_AUG_FLAG(NONE);
@@ -504,7 +575,7 @@ void Init__augeas() {
     DEF_AUG_FLAG(ENABLE_SPAN);
 #undef DEF_AUG_FLAG
 
-    /* Constants for enum aug_errcode_t */
+/* Constants for enum aug_errcode_t */
 #define DEF_AUG_ERR(name) \
     rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
     DEF_AUG_ERR(NOERROR);
@@ -522,21 +593,22 @@ void Init__augeas() {
 
     /* Define the methods */
     rb_define_singleton_method(c_augeas, "open3", augeas_init, 3);
-    rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
-    rb_define_method(c_augeas, "defnode", augeas_defnode, 3);
-    rb_define_method(c_augeas, "get", augeas_get, 1);
-    rb_define_method(c_augeas, "exists", augeas_exists, 1);
-    rb_define_method(c_augeas, "insert", augeas_insert, 3);
-    rb_define_method(c_augeas, "mv", augeas_mv, 2);
-    rb_define_method(c_augeas, "rm", augeas_rm, 1);
-    rb_define_method(c_augeas, "match", augeas_match, 1);
-    rb_define_method(c_augeas, "save", augeas_save, 0);
-    rb_define_method(c_augeas, "load", augeas_load, 0);
-    rb_define_method(c_augeas, "set_internal", augeas_set, 2);
-    rb_define_method(c_augeas, "setm", augeas_setm, 3);
+    rb_define_method(c_augeas, "augeas_defvar", augeas_defvar, 2);
+    rb_define_method(c_augeas, "augeas_defnode", augeas_defnode, 3);
+    rb_define_method(c_augeas, "augeas_get", augeas_get, 1);
+    rb_define_method(c_augeas, "augeas_exists", augeas_exists, 1);
+    rb_define_method(c_augeas, "augeas_insert", augeas_insert, 3);
+    rb_define_method(c_augeas, "augeas_mv", augeas_mv, 2);
+    rb_define_method(c_augeas, "augeas_rm", augeas_rm, 1);
+    rb_define_method(c_augeas, "augeas_match", augeas_match, 1);
+    rb_define_method(c_augeas, "augeas_save", augeas_save, 0);
+    rb_define_method(c_augeas, "augeas_load", augeas_load, 0);
+    rb_define_method(c_augeas, "augeas_set", augeas_set, 2);
+    rb_define_method(c_augeas, "augeas_setm", augeas_setm, 3);
+    /* The `close` and `error` methods as used unchanged in the ruby bindings */
     rb_define_method(c_augeas, "close", augeas_close, 0);
     rb_define_method(c_augeas, "error", augeas_error, 0);
-    rb_define_method(c_augeas, "span", augeas_span, 1);
+    rb_define_method(c_augeas, "augeas_span", augeas_span, 1);
     rb_define_method(c_augeas, "srun", augeas_srun, 1);
     rb_define_method(c_augeas, "label", augeas_label, 1);
     rb_define_method(c_augeas, "rename", augeas_rename, 2);
