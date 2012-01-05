@@ -45,6 +45,15 @@ class TestAugeas < Test::Unit::TestCase
     end
   end
 
+  def test_create_block
+    foo = nil
+    Augeas::create do |aug|
+      aug.set('/foo', 'bar')
+      foo = aug.get('/foo')
+    end
+    assert_equal(foo, 'bar')
+  end
+
   def test_close
     aug = Augeas::open("/tmp", nil, Augeas::SAVE_NEWFILE)
     assert_equal("newfile", aug.get("/augeas/save"))

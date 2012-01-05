@@ -79,7 +79,16 @@ class Augeas
   end
 
   def self.create(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
-    return Augeas.open3(root, loadpath, flags)
+    aug = Augeas.open3(root, loadpath, flags)
+    if block_given?
+      begin
+        yield aug
+      ensure
+        aug.close
+      end
+    else
+      return aug
+    end
   end
 
   # Get the value associated with +path+.
