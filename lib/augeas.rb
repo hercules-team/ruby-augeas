@@ -131,6 +131,25 @@ class Augeas
     nil
   end
   
+  # Load files according to the transforms in /augeas/load or those
+  # defined via <tt>transform</tt>.  A transform Foo is represented
+  # with a subtree /augeas/load/Foo.  Underneath /augeas/load/Foo, one
+  # node labeled 'lens' must exist, whose value is the fully
+  # qualified name of a lens, for example 'Foo.lns', and multiple
+  # nodes 'incl' and 'excl' whose values are globs that determine
+  # which files are transformed by that lens. It is an error if one
+  # file can be processed by multiple transforms.
+  def load
+    begin
+      run_command :augeas_load
+    rescue Augeas::CommandExecutionError => e
+      raise e, "Loading failed. Search the augeas tree in /augeas//error"+
+        "for the actual errors."
+    end
+
+    nil
+  end
+
   private
 
   # Run a command and raise any errors that happen due to execution.

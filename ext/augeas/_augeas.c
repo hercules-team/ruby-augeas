@@ -274,11 +274,23 @@ VALUE augeas_save_old(VALUE s) {
 
 /*
  * call-seq:
- *       load() -> boolean
+ *       load() -> int
  *
  * Load files from disk according to the transforms under +/augeas/load+
  */
 VALUE augeas_load(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int callValue = aug_load(aug);
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *       load() -> boolean
+ *
+ * Load files from disk according to the transforms under +/augeas/load+
+ */
+VALUE augeas_load_old(VALUE s) {
     augeas *aug = aug_handle(s);
     int callValue = aug_load(aug);
     VALUE returnValue ;
@@ -606,7 +618,7 @@ void Init__augeas() {
     rb_define_method(c_augeas_old, "rm", augeas_rm, 1);
     rb_define_method(c_augeas_old, "match", augeas_match_old, 1);
     rb_define_method(c_augeas_old, "save", augeas_save_old, 0);
-    rb_define_method(c_augeas_old, "load", augeas_load, 0);
+    rb_define_method(c_augeas_old, "load", augeas_load_old, 0);
     rb_define_method(c_augeas_old, "set_internal", augeas_set_old, 2);
     rb_define_method(c_augeas_old, "setm", augeas_setm, 3);
     rb_define_method(c_augeas_old, "close", augeas_close, 0);
