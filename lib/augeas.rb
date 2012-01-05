@@ -78,8 +78,9 @@ class Augeas
     return AugeasOld::open(root, loadpath, flags, &block)
   end
 
-  def self.create(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
-    aug = Augeas.open3(root, loadpath, flags)
+  def self.create(opts={:root=> nil, :loadpath=>nil, :flags=>Augeas::NONE},
+                  &block)
+    aug = Augeas.open3(opts[:root], opts[:loadpath], opts[:flags])
     if block_given?
       begin
         yield aug

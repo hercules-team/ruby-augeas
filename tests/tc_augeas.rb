@@ -434,6 +434,6 @@ class TestAugeas < Test::Unit::TestCase
     FileUtils::mkdir_p(TST_ROOT)
     FileUtils::cp_r(SRC_ROOT, TST_ROOT)
 
-    Augeas::create(TST_ROOT, nil, flags)
+    Augeas::create(:root => TST_ROOT, :loadpath => nil, :flags => flags)
   end
 end
