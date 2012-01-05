@@ -73,7 +73,7 @@ class Augeas
   # case, the return value of the block is the return value of
   # +open+. With no block, the Augeas instance is returned.
   def self.open(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
-    return AugeasOld.open(root, loadpath, flags)
+    return AugeasOld::open(root, loadpath, flags, &block)
   end
 
   def self.create(root=nil, loadpath=nil, flags=Augeas::NONE, &block)
