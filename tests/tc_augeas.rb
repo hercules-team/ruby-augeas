@@ -180,9 +180,14 @@ class TestAugeas < Test::Unit::TestCase
                  aug.get("/augeas/files/etc/sysconfig/iptables/error/message"))
   end
 
-  def test_set!
+  def test_set_invalid_path
     aug = aug_open
-    assert_raises(Augeas::Error) { aug.set!("files/etc/hosts/*", nil) }
+    assert_raises(Augeas::InvalidPathError) { aug.set("files/etc//", nil) }
+  end
+
+  def test_set_multiple_matches_error
+    aug = aug_open
+    assert_raises(Augeas::MultipleMatchesError) { aug.set("files/etc/*", nil) }
   end
 
   def test_set
