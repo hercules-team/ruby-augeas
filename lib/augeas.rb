@@ -41,7 +41,7 @@ class Augeas
   class MultipleTransformsError < Error; end
   class NoSpanInfoError         < Error; end
   class DescendantError         < Error; end
-  class CmdExecError            < Error; end
+  class CommandExecutionError   < Error; end
   @@error_hash = {
     # the cryptic error names come from the C library, we just make
     # them more ruby and more human
@@ -55,7 +55,7 @@ class Augeas
     EMXFM     => MultipleTransformsError,
     ENOSPAN   => NoSpanInfoError,
     EMVDESC   => DescendantError,
-    ECMDRUN   => CmdExecError }
+    ECMDRUN   => CommandExecutionError}
 
 
   # DEPRECATED. Create a new Augeas instance and return it.
