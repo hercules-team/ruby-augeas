@@ -101,6 +101,14 @@ class Augeas
     run_command :augeas_rm, path
   end
 
+  # Return an Array of all the paths that match the path expression +path+
+  #
+  # Returns an empty Array if no paths were found.
+  # Raises an <tt>Augeas::InvalidPathError</tt> when the +path+ is invalid.
+  def match(path)
+    run_command :augeas_match, path
+  end
+  
   private
 
   # Run a command and raise any errors that happen due to execution.

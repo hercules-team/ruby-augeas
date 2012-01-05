@@ -190,8 +190,37 @@ VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
  *
  * Return all the paths that match the path expression PATH as an aray of
  * strings.
+ * Returns an empty array if no paths were found.
  */
 VALUE augeas_match(VALUE s, VALUE p) {
+    augeas *aug = aug_handle(s);
+    const char *path = StringValueCStr(p);
+    char **matches = NULL;
+    int cnt, i;
+
+    cnt = aug_match(aug, path, &matches) ;
+    if (cnt < 0)
+        return -1;
+
+    VALUE result = rb_ary_new();
+    for (i = 0; i < cnt; i++) {
+        rb_ary_push(result, rb_str_new(matches[i], strlen(matches[i])));
+        free(matches[i]) ;
+    }
+    free (matches) ;
+
+    return result ;
+}
+
+/*
+ * call-seq:
+ *       match(PATH) -> an_array
+ *
+ * Return all the paths that match the path expression PATH as an aray of
+ * strings.
+ * Raises an error if no paths were found.
+ */
+VALUE augeas_match_old(VALUE s, VALUE p) {
     augeas *aug = aug_handle(s);
     const char *path = StringValueCStr(p);
     char **matches = NULL;
@@ -563,7 +592,7 @@ void Init__augeas() {
     rb_define_method(c_augeas_old, "insert", augeas_insert, 3);
     rb_define_method(c_augeas_old, "mv", augeas_mv, 2);
     rb_define_method(c_augeas_old, "rm", augeas_rm, 1);
-    rb_define_method(c_augeas_old, "match", augeas_match, 1);
+    rb_define_method(c_augeas_old, "match", augeas_match_old, 1);
     rb_define_method(c_augeas_old, "save", augeas_save, 0);
     rb_define_method(c_augeas_old, "load", augeas_load, 0);
     rb_define_method(c_augeas_old, "set_internal", augeas_set_old, 2);
