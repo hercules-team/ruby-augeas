@@ -23,10 +23,38 @@
 require "_augeas"
 require "augeas_old"
 
+
+# Wrapper class for the augeas[http://augeas.net] library.
 class Augeas
   private_class_method :new
 
-  class Error < RuntimeError; end
+  class Error                   < RuntimeError; end
+  class NoMemoryError           < Error; end
+  class InternalError           < Error; end
+  class InvalidPathError        < Error; end
+  class NoMatchError            < Error; end
+  class MultipleMatchesError    < Error; end
+  class LensSyntaxError         < Error; end
+  class LensNotFoundError       < Error; end
+  class MultipleTransformsError < Error; end
+  class NoSpanInfoError         < Error; end
+  class DescendantError         < Error; end
+  class CmdExecError            < Error; end
+  @@error_hash = {
+    # the cryptic error names come from the C library, we just make
+    # them more ruby and more human
+    ENOMEM    => NoMemoryError,
+    EINTERNAL => InternalError,
+    EPATHX    => InvalidPathError,
+    ENOMATCH  => NoMatchError,
+    EMMATCH   => MultipleMatchesError,
+    ESYNTAX   => LensSyntaxError,
+    ENOLENS   => LensNotFoundError,
+    EMXFM     => MultipleTransformsError,
+    ENOSPAN   => NoSpanInfoError,
+    EMVDESC   => DescendantError,
+    ECMDRUN   => CmdExecError }
+
 
   # DEPRECATED. Create a new Augeas instance and return it.
   #
