@@ -78,9 +78,62 @@ class Augeas
     return AugeasOld::open(root, loadpath, flags, &block)
   end
 
-  def self.create(opts={:root=> nil, :loadpath=>nil, :flags=>Augeas::NONE},
-                  &block)
-    aug = Augeas.open3(opts[:root], opts[:loadpath], opts[:flags])
+  # Create a new Augeas instance and return it.
+  #
+  # Use +:root+ as the filesystem root. If +:root+ is +nil+, use the value
+  # of the environment variable +AUGEAS_ROOT+. If that doesn't exist
+  # either, use "/".
+  #
+  # +:loadpath+ is a colon-spearated list of directories that modules
+  # should be searched in. This is in addition to the standard load path
+  # and the directories in +AUGEAS_LENS_LIB+
+  #
+  # The following flags can be specified in a hash. They all default to
+  # false and can be enabled by setting them to true
+  #
+  # :save_backup - keep the original file with an .augsave extension
+  #
+  # :save_newfile - save changes into a file with an .augnew extension
+  # and do not overwrite the original file. This takes precedence over
+  # :save_backup.
+  #
+  # :type_check - typecheck lenses (since it can be very expensive it is
+  # not done by default)
+  #
+  # :no_stdinc - do not use the builtin load path for modules
+  #
+  # :save_noop - make save a no-op process, just record what would have changed
+  #
+  # :no_load - do not load the tree during the initialization phase
+  #
+  # :no_modl_autoload - do not load the tree during the initialization phase
+  #
+  # :enable_span - track the span in the input nodes
+  #
+  # When a block is given, the Augeas instance is passed as the only
+  # argument into the block and closed when the block exits. In that
+  # case, the return value of the block is the return value of
+  # +open+. With no block, the Augeas instance is returned.
+  def self.create(opts={}, &block)
+    flags = {
+      :save_backup => Augeas::SAVE_BACKUP,
+      :save_newfile => Augeas::SAVE_NEWFILE,
+      :type_check => Augeas::TYPE_CHECK,
+      :no_stdinc => Augeas::NO_STDINC,
+      :save_noop => Augeas::SAVE_NOOP,
+      :no_load => Augeas::NO_LOAD,
+      :no_modl_autoload => Augeas::NO_MODL_AUTOLOAD,
+      :enable_span => Augeas::ENABLE_SPAN
+    }
+
+    # aug_flags is a bitmask in the underlying library, we add all the
+    # values of the flags which were set to true to the default value
+    # Augeas::NONE (which is 0)
+    aug_flags = Augeas::NONE
+    opts.each_key {|key| aug_flags += flags[key] if flags.key? key}
+
+    aug = Augeas::open3(opts[:root], opts[:loadpath], aug_flags)
+
     if block_given?
       begin
         yield aug
