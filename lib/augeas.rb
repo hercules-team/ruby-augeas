@@ -25,7 +25,6 @@
 require "_augeas"
 require "augeas_old"
 
-
 # Wrapper class for the augeas[http://augeas.net] library.
 class Augeas
   private_class_method :new
@@ -57,8 +56,7 @@ class Augeas
     EMVDESC   => DescendantError,
     ECMDRUN   => CommandExecutionError}
 
-
-  # DEPRECATED. Create a new Augeas instance and return it.
+  # DEPRECATED - use create instead. Create a new Augeas instance and return it.
   #
   # Use +root+ as the filesystem root. If +root+ is +nil+, use the value
   # of the environment variable +AUGEAS_ROOT+. If that doesn't exist
@@ -91,7 +89,6 @@ class Augeas
   # The following flags can be specified in a hash. They all default to
   # false and can be enabled by setting them to true
   #
-  #
   # :type_check - typecheck lenses (since it can be very expensive it is
   # not done by default)
   #
@@ -113,9 +110,8 @@ class Augeas
   #   do not overwrite the original file.
   #
   # When a block is given, the Augeas instance is passed as the only
-  # argument into the block and closed when the block exits. In that
-  # case, the return value of the block is the return value of
-  # +open+. With no block, the Augeas instance is returned.
+  # argument into the block and closed when the block exits.
+  # With no block, the Augeas instance is returned.
   def self.create(opts={}, &block)
     # aug_flags is a bitmask in the underlying library, we add all the
     # values of the flags which were set to true to the default value
