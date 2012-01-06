@@ -38,7 +38,7 @@ class TestAugeas < Test::Unit::TestCase
   TST_ROOT = File::expand_path(File::join(TOPDIR, "build", "root")) + "/"
 
   def test_basics
-    aug = aug_create(:save_newfile => true)
+    aug = aug_create(:save_mode => :newfile)
     assert_equal("newfile", aug.get("/augeas/save"))
     assert_equal(TST_ROOT, aug.get("/augeas/root"))
 
@@ -76,7 +76,7 @@ class TestAugeas < Test::Unit::TestCase
   end
 
   def test_close
-    aug = Augeas::create(:root => "/tmp", :save_newfile => true)
+    aug = Augeas::create(:root => "/tmp", :save_mode => :newfile)
     assert_equal("newfile", aug.get("/augeas/save"))
     aug.close
 
@@ -426,7 +426,7 @@ class TestAugeas < Test::Unit::TestCase
   end
 
   def test_flag_save_noop
-    aug = aug_create(:save_noop => true)
+    aug = aug_create(:save_mode => :noop)
     assert_equal("noop", aug.get("/augeas/save"))
   end
 

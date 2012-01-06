@@ -91,18 +91,11 @@ class Augeas
   # The following flags can be specified in a hash. They all default to
   # false and can be enabled by setting them to true
   #
-  # :save_backup - keep the original file with an .augsave extension
-  #
-  # :save_newfile - save changes into a file with an .augnew extension
-  # and do not overwrite the original file. This takes precedence over
-  # :save_backup.
   #
   # :type_check - typecheck lenses (since it can be very expensive it is
   # not done by default)
   #
   # :no_stdinc - do not use the builtin load path for modules
-  #
-  # :save_noop - make save a no-op process, just record what would have changed
   #
   # :no_load - do not load the tree during the initialization phase
   #
@@ -110,27 +103,44 @@ class Augeas
   #
   # :enable_span - track the span in the input nodes
   #
+  # :save_mode can be one of :backup, :newfile, :noop as explained below.
+  #
+  #   :noop - make save a no-op process, just record what would have changed
+  #
+  #   :backup - keep the original file with an .augsave extension
+  #
+  #   :newfile - save changes into a file with an .augnew extension and
+  #   do not overwrite the original file.
+  #
   # When a block is given, the Augeas instance is passed as the only
   # argument into the block and closed when the block exits. In that
   # case, the return value of the block is the return value of
   # +open+. With no block, the Augeas instance is returned.
   def self.create(opts={}, &block)
-    flags = {
-      :save_backup => Augeas::SAVE_BACKUP,
-      :save_newfile => Augeas::SAVE_NEWFILE,
-      :type_check => Augeas::TYPE_CHECK,
-      :no_stdinc => Augeas::NO_STDINC,
-      :save_noop => Augeas::SAVE_NOOP,
-      :no_load => Augeas::NO_LOAD,
-      :no_modl_autoload => Augeas::NO_MODL_AUTOLOAD,
-      :enable_span => Augeas::ENABLE_SPAN
-    }
-
     # aug_flags is a bitmask in the underlying library, we add all the
     # values of the flags which were set to true to the default value
     # Augeas::NONE (which is 0)
     aug_flags = Augeas::NONE
-    opts.each_key {|key| aug_flags += flags[key] if flags.key? key}
+
+    flags = {
+      :type_check => Augeas::TYPE_CHECK,
+      :no_stdinc => Augeas::NO_STDINC,
+      :no_load => Augeas::NO_LOAD,
+      :no_modl_autoload => Augeas::NO_MODL_AUTOLOAD,
+      :enable_span => Augeas::ENABLE_SPAN
+    }
+    save_modes = {
+      :backup => Augeas::SAVE_BACKUP,
+      :newfile => Augeas::SAVE_NEWFILE,
+      :noop => Augeas::SAVE_NOOP
+    }
+    opts.each_key do |key|
+      if flags.key? key
+        aug_flags += flags[key]
+      elsif key == :save_mode && save_modes[opts[:save_mode]]
+        aug_flags += save_modes[opts[:save_mode]]
+      end
+    end
 
     aug = Augeas::open3(opts[:root], opts[:loadpath], aug_flags)
 
