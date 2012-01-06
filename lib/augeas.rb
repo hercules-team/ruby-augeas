@@ -137,8 +137,14 @@ class Augeas
     opts.each_key do |key|
       if flags.key? key
         aug_flags += flags[key]
-      elsif key == :save_mode && save_modes[opts[:save_mode]]
-        aug_flags += save_modes[opts[:save_mode]]
+      elsif key == :save_mode
+        if save_modes[opts[:save_mode]]
+          aug_flags += save_modes[opts[:save_mode]]
+        else
+          raise ArgumentError, "Invalid save mode #{opts[:save_mode]}."
+        end
+      elsif key != :root && key != :loadpath
+        raise ArgumentError, "Unknown argument #{key}."
       end
     end
 

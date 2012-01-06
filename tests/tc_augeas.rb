@@ -66,6 +66,18 @@ class TestAugeas < Test::Unit::TestCase
     end
   end
 
+  def test_create_unknown_argument
+    assert_raise ArgumentError do
+      Augeas::create(:bogus => false)
+    end
+  end
+
+  def test_create_invalid_save_mode
+    assert_raise ArgumentError do
+      Augeas::create(:save_mode => :bogus)
+    end
+  end
+
   def test_create_block
     foo = nil
     Augeas::create do |aug|
