@@ -131,3 +131,5 @@ end
 task :sync do |t|
     system "rsync -rav doc/site/ et:/var/www/sites/augeas.et.redhat.com/docs/ruby/"
 end
+
+task :default => [:build, :test]
