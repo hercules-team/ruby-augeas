@@ -264,7 +264,11 @@ class Augeas
 
     nil
   end
-  
+
+  def clearm(path, sub)
+    setm(path, sub, nil)
+  end
+
   # Load files according to the transforms in /augeas/load or those
   # defined via <tt>transform</tt>.  A transform Foo is represented
   # with a subtree /augeas/load/Foo.  Underneath /augeas/load/Foo, one
