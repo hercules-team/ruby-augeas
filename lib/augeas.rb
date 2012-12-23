@@ -77,6 +77,18 @@ class Augeas
         set_internal(path, nil)
     end
 
+    # Clear multiple nodes values in one operation. Find or create a node matching +sub+
+    # by interpreting +sub+ as a path expression relative to each node matching
+    # +base+. If +sub+ is '.', the nodes matching +base+ will be modified.
+    def clearm(base, sub)
+        setm(base, sub, nil)
+    end
+
+    # Create the +path+ with empty value if it doesn't exist
+    def touch(path)
+        set_internal(path, nil) if match(path).empty?
+    end
+
     # Clear all transforms under <tt>/augeas/load</tt>. If +load+
     # is called right after this, there will be no files
     # under +/files+
@@ -98,6 +110,7 @@ class Augeas
         excl = hash[:excl]
         raise ArgumentError, "No lens specified" unless lens
         raise ArgumentError, "No files to include" unless incl
+        lens = "#{lens}.lns" unless lens.include? '.'
         name = lens.split(".")[0].sub("@", "") unless name
 
         xfm = "/augeas/load/#{name}/"
@@ -114,6 +127,16 @@ class Augeas
     # The same as +load+, but raises <tt>Augeas::Error</tt> if loading fails
     def load!
         raise Augeas::Error unless load
+    end
+
+    # Set path expression context to +path+ (in /augeas/context)
+    def context=(path)
+      set_internal('/augeas/context', path)
+    end
+
+    # Get path expression context (from /augeas/context)
+    def context
+      get('/augeas/context')
     end
 
 end

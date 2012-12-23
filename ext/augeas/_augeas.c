@@ -411,6 +411,80 @@ VALUE augeas_srun(VALUE s, VALUE text) {
     return result;
 }
 
+/*
+ * call-seq:
+ *   label(PATH) -> String
+ *
+ * Lookup the label associated with PATH
+ */
+VALUE augeas_label(VALUE s, VALUE path) {
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValueCStr(path);
+    const char *label;
+
+    aug_label(aug, cpath, &label);
+    if (label != NULL) {
+        return rb_str_new(label, strlen(label)) ;
+    } else {
+        return Qnil;
+    }
+}
+
+/*
+ * call-seq:
+ *   rename(SRC, LABEL) -> int
+ *
+ * Rename the label of all nodes matching SRC to LABEL.
+ *
+ * Returns +false+ if +aug_rename+ fails, and the number of nodes renamed
+ * on success.
+ */
+VALUE augeas_rename(VALUE s, VALUE src, VALUE label) {
+    augeas *aug = aug_handle(s);
+    const char *csrc = StringValueCStr(src);
+    const char *clabel = StringValueCStr(label);
+    int r = aug_rename(aug, csrc, clabel);
+
+    return (r < 0) ? Qfalse : INT2NUM(r);
+}
+
+/*
+ * call-seq:
+ *   text_store(LENS, NODE, PATH) -> boolean
+ *
+ * Use the value of node NODE as a string and transform it into a tree
+ * using the lens LENS and store it in the tree at PATH, which will be
+ * overwritten. PATH and NODE are path expressions.
+ */
+VALUE augeas_text_store(VALUE s, VALUE lens, VALUE node, VALUE path) {
+    augeas *aug = aug_handle(s);
+    const char *clens = StringValueCStr(lens);
+    const char *cnode = StringValueCStr(node);
+    const char *cpath = StringValueCStr(path);
+    int r = aug_text_store(aug, clens, cnode, cpath);
+
+    return (r < 0) ? Qfalse : Qtrue;
+}
+
+/*
+ * call-seq:
+ *   text_retrieve(LENS, NODE_IN, PATH, NODE_OUT) -> boolean
+ *
+ * Transform the tree at PATH into a string using lens LENS and store it in
+ * the node NODE_OUT, assuming the tree was initially generated using the
+ * value of node NODE_IN. PATH, NODE_IN, and NODE_OUT are path expressions.
+ */
+VALUE augeas_text_retrieve(VALUE s, VALUE lens, VALUE node_in, VALUE path, VALUE node_out) {
+    augeas *aug = aug_handle(s);
+    const char *clens = StringValueCStr(lens);
+    const char *cnode_in = StringValueCStr(node_in);
+    const char *cpath = StringValueCStr(path);
+    const char *cnode_out = StringValueCStr(node_out);
+    int r = aug_text_retrieve(aug, clens, cnode_in, cpath, cnode_out);
+
+    return (r < 0) ? Qfalse : Qtrue;
+}
+
 void Init__augeas() {
 
     /* Define the ruby class */
@@ -464,6 +538,10 @@ void Init__augeas() {
     rb_define_method(c_augeas, "error", augeas_error, 0);
     rb_define_method(c_augeas, "span", augeas_span, 1);
     rb_define_method(c_augeas, "srun", augeas_srun, 1);
+    rb_define_method(c_augeas, "label", augeas_label, 1);
+    rb_define_method(c_augeas, "rename", augeas_rename, 2);
+    rb_define_method(c_augeas, "text_store", augeas_text_store, 3);
+    rb_define_method(c_augeas, "text_retrieve", augeas_text_retrieve, 4);
 }
 
 /*
