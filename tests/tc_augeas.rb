@@ -87,6 +87,57 @@ class TestAugeas < Test::Unit::TestCase
     assert_equal(foo, 'bar')
   end
 
+    def test_load
+        aug = aug_open(Augeas::NO_LOAD)
+        assert_equal([], aug.match("/files/etc/*"))
+        aug.rm("/augeas/load/*");
+        assert_nothing_raised {
+            aug.load
+        }
+        assert_equal([], aug.match("/files/etc/*"))
+    end
+
+    def test_transform
+        aug = aug_open(Augeas::NO_LOAD)
+        aug.clear_transforms
+        aug.transform(:lens => "Hosts.lns",
+                      :incl => "/etc/hosts")
+        assert_raise(ArgumentError) {
+            aug.transform(:name => "Fstab",
+                          :incl => [ "/etc/fstab" ],
+                          :excl => [ "*~", "*.rpmnew" ])
+        }
+        aug.transform(:lens => "Inittab",
+                      :incl => "/etc/inittab")
+        aug.transform(:lens => "Fstab.lns",
+                      :incl => "/etc/fstab*",
+                      :excl => "*~")
+        assert_equal(["/augeas/load/Fstab", "/augeas/load/Fstab/excl",
+                      "/augeas/load/Fstab/incl", "/augeas/load/Fstab/lens",
+                      "/augeas/load/Hosts", "/augeas/load/Hosts/incl",
+                      "/augeas/load/Hosts/lens", "/augeas/load/Inittab",
+                      "/augeas/load/Inittab/incl",
+                      "/augeas/load/Inittab/lens"],
+                     aug.match("/augeas/load//*").sort)
+        aug.load
+        assert_equal(["/files/etc/hosts", "/files/etc/inittab"],
+                     aug.match("/files/etc/*").sort)
+    end
+
+    def test_defvar
+        Augeas::open("/dev/null") do |aug|
+            aug.set("/a/b", "bval")
+            aug.set("/a/c", "cval")
+            assert aug.defvar("var", "/a/b")
+            assert_equal(["/a/b"], aug.match("$var"))
+            assert aug.defvar("var", nil)
+            assert_raises(SystemCallError) {
+                aug.match("$var")
+            }
+            assert ! aug.defvar("var", "/foo/")
+        end
+  end
+
   def test_close
     aug = Augeas::create(:root => "/tmp", :save_mode => :newfile)
     assert_equal("newfile", aug.get("/augeas/save"))
@@ -549,6 +600,73 @@ class TestAugeas < Test::Unit::TestCase
         assert_equal(-1, aug.srun("foo")[0])
         assert_equal(-1, aug.srun("set")[0])
         assert_equal(-2, aug.srun("quit")[0])
+    end
+
+    def test_label
+        Augeas::open("/dev/null") do |aug|
+            assert_equal 'augeas', aug.label('/augeas')
+            assert_equal 'files', aug.label('/files')
+        end
+    end
+
+    def test_rename
+        Augeas::open("/dev/null") do |aug|
+            assert_equal false, aug.rename('/files', 'invalid/label')
+            assert_equal 0, aug.rename('/nonexistent', 'label')
+            assert_equal ['/files'], aug.match('/files')
+            assert_equal 1, aug.rename('/files', 'label')
+        end
+    end
+
+    def test_text_store_retrieve
+        Augeas::open("/dev/null") do |aug|
+            # text_store errors
+            assert_equal false, aug.text_store('Simplelines.lns', '/input', '/store')
+
+            # text_store
+            aug.set('/input', "line1\nline2\n")
+            assert aug.text_store('Simplelines.lns', '/input', '/store')
+            assert_equal 'line2', aug.get('/store/2')
+
+            # text_retrieve errors
+            assert_equal false, aug.text_retrieve('Simplelines.lns', '/unknown', '/store', '/output')
+
+            # text_retrieve
+            aug.set('/store/3', 'line3')
+            assert aug.text_retrieve('Simplelines.lns', '/input', '/store', '/output')
+            assert_equal "line1\nline2\nline3\n", aug.get('/output')
+        end
+    end
+
+    def test_context
+        Augeas::open("/dev/null") do |aug|
+            aug.context = '/augeas'
+            assert_equal '/augeas', aug.get('/augeas/context')
+            assert_equal '/augeas', aug.get('context')
+            assert_equal '/augeas', aug.context
+        end
+    end
+
+    def test_touch
+        Augeas::open("/dev/null") do |aug|
+            assert_equal [], aug.match('/foo')
+            aug.touch '/foo'
+            assert_equal ['/foo'], aug.match('/foo')
+
+            aug.set '/foo', 'bar'
+            aug.touch '/foo'
+            assert_equal 'bar', aug.get('/foo')
+        end
+    end
+
+    def test_clearm
+        Augeas::open("/dev/null") do |aug|
+            aug.set('/foo/a', '1')
+            aug.set('/foo/b', '2')
+            aug.clearm('/foo', '*')
+            assert_nil aug.get('/foo/a')
+            assert_nil aug.get('/foo/b')
+        end
     end
 
     private

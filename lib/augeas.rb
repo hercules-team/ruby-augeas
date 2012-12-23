@@ -200,6 +200,11 @@ class Augeas
     run_command :augeas_match, path
   end
 
+    # Create the +path+ with empty value if it doesn't exist
+    def touch(path)
+        set_internal(path, nil) if match(path).empty?
+    end
+
   # Evaluate +expr+ and set the variable +name+ to the resulting
   # nodeset. The variable can be used in path expressions as $name.
   # Note that +expr+ is evaluated when the variable is defined, not when
@@ -237,6 +242,7 @@ class Augeas
     excl = hash[:excl]
     raise ArgumentError, "No lens specified" unless lens
     raise ArgumentError, "No files to include" unless incl
+    lens = "#{lens}.lns" unless lens.include? '.'
     name = lens.split(".")[0].sub("@", "") unless name
 
     xfm = "/augeas/load/#{name}/"
@@ -346,4 +352,13 @@ class Augeas
     return result
   end
   
+    # Set path expression context to +path+ (in /augeas/context)
+    def context=(path)
+      set_internal('/augeas/context', path)
+    end
+
+    # Get path expression context (from /augeas/context)
+    def context
+      get('/augeas/context')
+    end
 end
