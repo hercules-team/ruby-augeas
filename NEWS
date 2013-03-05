@@ -1,3 +1,19 @@
+0.5.0 - 2013-03-XX
+  - add libxml2 headers and library to Makefile
+  - add libxml2-devel build req to rpm spec
+  - split out header, add memstream utils from Augeas
+  - integrate with Travis CI
+  - Takefile: add gem authors metadata
+  - Augeas::transform: add .lns suffix if a module name is passed
+    to match aug_transform behaviour
+  - add Augeas::clearm
+  - add Augeas::context and Augeas::context=
+  - add Augeas::label
+  - add Augeas::rename
+  - add Augeas::srun
+  - add Augeas::text_retrieve
+  - add Augeas::text_store
+
 0.4.1 - 2011-03-29
   - remove object files from release tarball
 
