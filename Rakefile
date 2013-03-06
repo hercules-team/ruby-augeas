@@ -9,9 +9,9 @@
 # Bryan Kearney <bkearney@redhat.com>
 
 require 'rake/clean'
-require 'rake/rdoctask'
+require 'rdoc/task'
 require 'rake/testtask'
-require 'rake/gempackagetask'
+require 'rubygems/package_task'
 
 PKG_NAME='ruby-augeas'
 GEM_NAME=PKG_NAME # we'd like 'augeas' but that makes RPM fail
@@ -65,7 +65,7 @@ task :test => :build
 #
 # Generate the documentation
 #
-Rake::RDocTask.new do |rd|
+RDoc::Task.new do |rd|
     rd.main = "README.rdoc"
     rd.rdoc_dir = "doc/site/api"
     rd.rdoc_files.include("README.rdoc", "ext/**/*.[ch]","lib/**/*.rb")
@@ -99,7 +99,7 @@ SPEC = Gem::Specification.new do |s|
     s.description = "Provides bindings for augeas."
 end
 
-Rake::GemPackageTask.new(SPEC) do |pkg|
+Gem::PackageTask.new(SPEC) do |pkg|
     pkg.need_tar = true
     pkg.need_zip = true
 end
