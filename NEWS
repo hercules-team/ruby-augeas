@@ -1,4 +1,4 @@
-0.5.0 - 2013-03-XX
+0.5.0 - 2013-03-12
   - add libxml2 headers and library to Makefile
   - add libxml2-devel build req to rpm spec
   - split out header, add memstream utils from Augeas
