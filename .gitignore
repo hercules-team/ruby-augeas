@@ -5,3 +5,4 @@ ext/augeas/*.o
 ext/augeas/*.so
 ext/augeas/*.log
 pkg/
+Gemfile.lock
