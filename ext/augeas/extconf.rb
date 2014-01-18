@@ -32,11 +32,12 @@ if RbConfig::CONFIG['target_os'] =~ /darwin/
   $LIBS += "-laugeas"
 end
 
-
 # Use have_library rather than pkg_config
 unless have_library("augeas")
   raise "libaugeas is not installed"
 end
+
+pkg_config('augeas')
 
 unless have_library("xml2")
   raise "libxml2 is not installed"

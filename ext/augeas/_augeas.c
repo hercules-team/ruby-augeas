@@ -26,7 +26,6 @@
 #include <ruby.h>
 #include <augeas.h>
 
-static VALUE c_augeas_old;
 static VALUE c_augeas;
 
 static augeas *aug_handle(VALUE s) {
@@ -55,11 +54,12 @@ VALUE augeas_get(VALUE s, VALUE path) {
     const char *cpath = StringValueCStr(path);
     const char *value;
 
-    aug_get(aug, cpath, &value);
-    if (value != NULL) {
-        return rb_str_new(value, strlen(value)) ;
+	int retval = aug_get(aug, cpath, &value);
+
+    if (retval == 1 && value != NULL) {
+		return rb_str_new(value, strlen(value));
     } else {
-        return Qnil;
+		return Qnil;
     }
 }
 
@@ -368,11 +368,7 @@ VALUE augeas_init_split(VALUE m, VALUE r, VALUE l, VALUE f, char version) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    if (version == 0) {
-        return Data_Wrap_Struct(c_augeas_old, NULL, augeas_free, aug);
-    } else {
-        return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
-    }
+    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
 }
 
 VALUE augeas_init_old(VALUE m, VALUE r, VALUE l, VALUE f) {
