@@ -52,7 +52,7 @@ static void augeas_free(augeas *aug) {
 VALUE augeas_get(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path);
-    const char *value;
+    const char *value = NULL;
 
 	int retval = aug_get(aug, cpath, &value);
 
@@ -406,7 +406,7 @@ static void hash_set(VALUE hash, const char *sym, VALUE v) {
 VALUE augeas_error(VALUE s) {
     augeas *aug = aug_handle(s);
     int code;
-    const char *msg;
+    const char *msg = NULL;
     VALUE result;
 
     result = rb_hash_new();
@@ -504,7 +504,7 @@ VALUE augeas_srun(VALUE s, VALUE text) {
 VALUE augeas_label(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path);
-    const char *label;
+    const char *label = NULL;
 
     aug_label(aug, cpath, &label);
     if (label != NULL) {
