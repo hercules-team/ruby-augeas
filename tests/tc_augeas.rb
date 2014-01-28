@@ -125,7 +125,7 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_defvar
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			aug.set("/a/b", "bval")
 			aug.set("/a/c", "cval")
 			assert aug.defvar("var", "/a/b")
@@ -605,14 +605,14 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_label
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			assert_equal 'augeas', aug.label('/augeas')
 			assert_equal 'files', aug.label('/files')
 		end
 	end
 
 	def test_rename
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			assert_equal false, aug.rename('/files', 'invalid/label')
 			assert_equal 0, aug.rename('/nonexistent', 'label')
 			assert_equal ['/files'], aug.match('/files')
@@ -621,7 +621,7 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_text_store_retrieve
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			# text_store errors
 			assert_equal false, aug.text_store('Simplelines.lns', '/input', '/store')
 
@@ -641,7 +641,7 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_context
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			aug.context = '/augeas'
 			assert_equal '/augeas', aug.get('/augeas/context')
 			assert_equal '/augeas', aug.get('context')
@@ -650,7 +650,7 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_touch
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			assert_equal [], aug.match('/foo')
 			aug.touch '/foo'
 			assert_equal ['/foo'], aug.match('/foo')
@@ -662,7 +662,7 @@ class TestAugeas < Test::Unit::TestCase
 	end
 
 	def test_clearm
-		Augeas::open("/dev/null") do |aug|
+		Augeas::create("/dev/null") do |aug|
 			aug.set('/foo/a', '1')
 			aug.set('/foo/b', '2')
 			aug.clearm('/foo', '*')
@@ -679,6 +679,6 @@ class TestAugeas < Test::Unit::TestCase
 		FileUtils::mkdir_p(TST_ROOT)
 		FileUtils::cp_r(SRC_ROOT, TST_ROOT)
 
-		Augeas::open(TST_ROOT, nil, flags)
+		Augeas::create(TST_ROOT, nil, flags)
 	end
 end
