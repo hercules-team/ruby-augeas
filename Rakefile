@@ -97,6 +97,8 @@ SPEC = Gem::Specification.new do |s|
     s.required_ruby_version = '>= 1.8.1'
     s.extensions = "ext/augeas/extconf.rb"
     s.description = "Provides bindings for augeas."
+    s.add_development_dependency "rake"
+    s.add_development_dependency "rdoc"
 end
 
 Gem::PackageTask.new(SPEC) do |pkg|

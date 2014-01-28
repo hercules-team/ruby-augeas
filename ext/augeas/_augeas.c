@@ -2,6 +2,7 @@
  * augeas.c: Ruby bindings for augeas
  *
  * Copyright (C) 2008-2011 Red Hat Inc.
+ * Copyright (C) 2011 SUSE LINUX Products GmbH, Nuernberg, Germany.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,13 +18,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  *
- * Author: Bryan Kearney <bkearney@redhat.com>
+ * Authors: Bryan Kearney <bkearney@redhat.com>
+ *          Ionuț Arțăriși <iartarisi@suse.cz>
  */
 #include "_augeas.h"
 
 #include <ruby.h>
 #include <augeas.h>
 
+static VALUE c_augeas_old;
 static VALUE c_augeas;
 
 static augeas *aug_handle(VALUE s) {
@@ -50,11 +53,12 @@ static void augeas_free(augeas *aug) {
 VALUE augeas_get(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path);
-    const char *value;
+    const char *value = NULL;
 
-    aug_get(aug, cpath, &value);
-    if (value != NULL) {
-        return rb_str_new(value, strlen(value)) ;
+    int retval = aug_get(aug, cpath, &value);
+
+    if (retval == 1 && value != NULL) {
+        return rb_str_new(value, strlen(value));
     } else {
         return Qnil;
     }
@@ -76,13 +80,30 @@ VALUE augeas_exists(VALUE s, VALUE path) {
 
 /*
  * call-seq:
- *   set(PATH, VALUE) -> boolean
+ *   set(PATH, VALUE) -> int
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
  * exist.
  */
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValueCStr(path) ;
+    const char *cvalue = StringValueCStrOrNull(value) ;
+
+    int callValue = aug_set(aug, cpath, cvalue) ;
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *   set(PATH, VALUE) -> boolean
+ *
+ * Set the value associated with PATH to VALUE. VALUE is copied into the
+ * internal data structure. Intermediate entries are created if they don't
+ * exist.
+ */
+VALUE augeas_set_old(VALUE s, VALUE path, VALUE value) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path) ;
     const char *cvalue = StringValueCStrOrNull(value) ;
@@ -172,8 +193,37 @@ VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
  *
  * Return all the paths that match the path expression PATH as an aray of
  * strings.
+ * Returns an empty array if no paths were found.
  */
 VALUE augeas_match(VALUE s, VALUE p) {
+    augeas *aug = aug_handle(s);
+    const char *path = StringValueCStr(p);
+    char **matches = NULL;
+    int cnt, i;
+
+    cnt = aug_match(aug, path, &matches) ;
+    if (cnt < 0)
+        return -1;
+
+    VALUE result = rb_ary_new();
+    for (i = 0; i < cnt; i++) {
+        rb_ary_push(result, rb_str_new(matches[i], strlen(matches[i])));
+        free(matches[i]) ;
+    }
+    free (matches) ;
+
+    return result ;
+}
+
+/*
+ * call-seq:
+ *       match(PATH) -> an_array
+ *
+ * Return all the paths that match the path expression PATH as an aray of
+ * strings.
+ * Raises an error if no paths were found.
+ */
+VALUE augeas_match_old(VALUE s, VALUE p) {
     augeas *aug = aug_handle(s);
     const char *path = StringValueCStr(p);
     char **matches = NULL;
@@ -196,11 +246,23 @@ VALUE augeas_match(VALUE s, VALUE p) {
 
 /*
  * call-seq:
- *       save() -> boolean
+ *       save() -> int
  *
  * Write all pending changes to disk
  */
 VALUE augeas_save(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int callValue = aug_save(aug);
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *       save() -> boolean
+ *
+ * Write all pending changes to disk
+ */
+VALUE augeas_save_old(VALUE s) {
     augeas *aug = aug_handle(s);
     int callValue = aug_save(aug) ;
     VALUE returnValue ;
@@ -215,11 +277,23 @@ VALUE augeas_save(VALUE s) {
 
 /*
  * call-seq:
- *       load() -> boolean
+ *       load() -> int
  *
  * Load files from disk according to the transforms under +/augeas/load+
  */
 VALUE augeas_load(VALUE s) {
+    augeas *aug = aug_handle(s);
+    int callValue = aug_load(aug);
+    return INT2FIX(callValue);
+}
+
+/*
+ * call-seq:
+ *       load() -> boolean
+ *
+ * Load files from disk according to the transforms under +/augeas/load+
+ */
+VALUE augeas_load_old(VALUE s) {
     augeas *aug = aug_handle(s);
     int callValue = aug_load(aug);
     VALUE returnValue ;
@@ -282,7 +356,10 @@ VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
     return (r < 0) ? Qfalse : INT2NUM(r);
 }
 
-VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+/* This function returns different names for different augeas API */
+/* version specified in the +version+ argument. See augeas_init_old and */
+/* augeas_init. */
+VALUE augeas_init_split(VALUE m, VALUE r, VALUE l, VALUE f, char version) {
     unsigned int flags = NUM2UINT(f);
     const char *root = StringValueCStrOrNull(r);
     const char *loadpath = StringValueCStrOrNull(l);
@@ -292,8 +369,20 @@ VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    if (version == 0) {
+        return Data_Wrap_Struct(c_augeas_old, NULL, augeas_free, aug);
+    } else {
+        return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    }
 }
+
+VALUE augeas_init_old(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return augeas_init_split(m, r, l, f, 0);
+}
+VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return augeas_init_split(m, r, l, f, 1);
+}
+
 
 VALUE augeas_close (VALUE s) {
     augeas *aug = aug_handle(s);
@@ -322,7 +411,7 @@ static void hash_set(VALUE hash, const char *sym, VALUE v) {
 VALUE augeas_error(VALUE s) {
     augeas *aug = aug_handle(s);
     int code;
-    const char *msg;
+    const char *msg = NULL;
     VALUE result;
 
     result = rb_hash_new();
@@ -420,7 +509,7 @@ VALUE augeas_srun(VALUE s, VALUE text) {
 VALUE augeas_label(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path);
-    const char *label;
+    const char *label = NULL;
 
     aug_label(aug, cpath, &label);
     if (label != NULL) {
@@ -487,12 +576,12 @@ VALUE augeas_text_retrieve(VALUE s, VALUE lens, VALUE node_in, VALUE path, VALUE
 
 void Init__augeas() {
 
-    /* Define the ruby class */
-    c_augeas = rb_define_class("Augeas", rb_cObject) ;
+    /* Define the OLD ruby class. DEPRECATED. */
+    c_augeas_old = rb_define_class("AugeasOld", rb_cObject) ;
 
     /* Constants for enum aug_flags */
 #define DEF_AUG_FLAG(name) \
-    rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
+    rb_define_const(c_augeas_old, #name, INT2NUM(AUG_##name))
     DEF_AUG_FLAG(NONE);
     DEF_AUG_FLAG(SAVE_BACKUP);
     DEF_AUG_FLAG(SAVE_NEWFILE);
@@ -506,6 +595,64 @@ void Init__augeas() {
 
     /* Constants for enum aug_errcode_t */
 #define DEF_AUG_ERR(name) \
+    rb_define_const(c_augeas_old, #name, INT2NUM(AUG_##name))
+    DEF_AUG_ERR(NOERROR);
+    DEF_AUG_ERR(ENOMEM);
+    DEF_AUG_ERR(EINTERNAL);
+    DEF_AUG_ERR(EPATHX);
+    DEF_AUG_ERR(ENOMATCH);
+    DEF_AUG_ERR(EMMATCH);
+    DEF_AUG_ERR(ESYNTAX);
+    DEF_AUG_ERR(ENOLENS);
+    DEF_AUG_ERR(EMXFM);
+    DEF_AUG_ERR(ENOSPAN);
+    DEF_AUG_ERR(EMVDESC);
+    DEF_AUG_ERR(ECMDRUN);
+#undef DEF_AUG_ERR
+
+    /* Define the methods */
+    rb_define_singleton_method(c_augeas_old, "open3", augeas_init_old, 3);
+    rb_define_method(c_augeas_old, "defvar", augeas_defvar, 2);
+    rb_define_method(c_augeas_old, "defnode", augeas_defnode, 3);
+    rb_define_method(c_augeas_old, "get", augeas_get, 1);
+    rb_define_method(c_augeas_old, "exists", augeas_exists, 1);
+    rb_define_method(c_augeas_old, "insert", augeas_insert, 3);
+    rb_define_method(c_augeas_old, "mv", augeas_mv, 2);
+    rb_define_method(c_augeas_old, "rm", augeas_rm, 1);
+    rb_define_method(c_augeas_old, "match", augeas_match_old, 1);
+    rb_define_method(c_augeas_old, "save", augeas_save_old, 0);
+    rb_define_method(c_augeas_old, "load", augeas_load_old, 0);
+    rb_define_method(c_augeas_old, "set_internal", augeas_set_old, 2);
+    rb_define_method(c_augeas_old, "setm", augeas_setm, 3);
+    rb_define_method(c_augeas_old, "close", augeas_close, 0);
+    rb_define_method(c_augeas_old, "error", augeas_error, 0);
+    rb_define_method(c_augeas_old, "span", augeas_span, 1);
+
+
+   /* Define the NEW ruby class
+    *
+    * This class is basically the same as the old one, but uses a
+    * different naming scheme for methods (prefixing everything with
+    * "augeas_"). Also some methods point to different C functions.
+    */
+    c_augeas = rb_define_class("Augeas", rb_cObject) ;
+
+/* Constants for enum aug_flags */
+#define DEF_AUG_FLAG(name) \
+    rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
+    DEF_AUG_FLAG(NONE);
+    DEF_AUG_FLAG(SAVE_BACKUP);
+    DEF_AUG_FLAG(SAVE_NEWFILE);
+    DEF_AUG_FLAG(TYPE_CHECK);
+    DEF_AUG_FLAG(NO_STDINC);
+    DEF_AUG_FLAG(SAVE_NOOP);
+    DEF_AUG_FLAG(NO_LOAD);
+    DEF_AUG_FLAG(NO_MODL_AUTOLOAD);
+    DEF_AUG_FLAG(ENABLE_SPAN);
+#undef DEF_AUG_FLAG
+
+/* Constants for enum aug_errcode_t */
+#define DEF_AUG_ERR(name) \
     rb_define_const(c_augeas, #name, INT2NUM(AUG_##name))
     DEF_AUG_ERR(NOERROR);
     DEF_AUG_ERR(ENOMEM);
@@ -517,26 +664,28 @@ void Init__augeas() {
     DEF_AUG_ERR(ENOLENS);
     DEF_AUG_ERR(EMXFM);
     DEF_AUG_ERR(ENOSPAN);
+    DEF_AUG_ERR(EMVDESC);
     DEF_AUG_ERR(ECMDRUN);
 #undef DEF_AUG_ERR
 
     /* Define the methods */
     rb_define_singleton_method(c_augeas, "open3", augeas_init, 3);
-    rb_define_method(c_augeas, "defvar", augeas_defvar, 2);
-    rb_define_method(c_augeas, "defnode", augeas_defnode, 3);
-    rb_define_method(c_augeas, "get", augeas_get, 1);
-    rb_define_method(c_augeas, "exists", augeas_exists, 1);
-    rb_define_method(c_augeas, "insert", augeas_insert, 3);
-    rb_define_method(c_augeas, "mv", augeas_mv, 2);
-    rb_define_method(c_augeas, "rm", augeas_rm, 1);
-    rb_define_method(c_augeas, "match", augeas_match, 1);
-    rb_define_method(c_augeas, "save", augeas_save, 0);
-    rb_define_method(c_augeas, "load", augeas_load, 0);
-    rb_define_method(c_augeas, "set_internal", augeas_set, 2);
-    rb_define_method(c_augeas, "setm", augeas_setm, 3);
+    rb_define_method(c_augeas, "augeas_defvar", augeas_defvar, 2);
+    rb_define_method(c_augeas, "augeas_defnode", augeas_defnode, 3);
+    rb_define_method(c_augeas, "augeas_get", augeas_get, 1);
+    rb_define_method(c_augeas, "augeas_exists", augeas_exists, 1);
+    rb_define_method(c_augeas, "augeas_insert", augeas_insert, 3);
+    rb_define_method(c_augeas, "augeas_mv", augeas_mv, 2);
+    rb_define_method(c_augeas, "augeas_rm", augeas_rm, 1);
+    rb_define_method(c_augeas, "augeas_match", augeas_match, 1);
+    rb_define_method(c_augeas, "augeas_save", augeas_save, 0);
+    rb_define_method(c_augeas, "augeas_load", augeas_load, 0);
+    rb_define_method(c_augeas, "augeas_set", augeas_set, 2);
+    rb_define_method(c_augeas, "augeas_setm", augeas_setm, 3);
+    /* The `close` and `error` methods as used unchanged in the ruby bindings */
     rb_define_method(c_augeas, "close", augeas_close, 0);
     rb_define_method(c_augeas, "error", augeas_error, 0);
-    rb_define_method(c_augeas, "span", augeas_span, 1);
+    rb_define_method(c_augeas, "augeas_span", augeas_span, 1);
     rb_define_method(c_augeas, "srun", augeas_srun, 1);
     rb_define_method(c_augeas, "label", augeas_label, 1);
     rb_define_method(c_augeas, "rename", augeas_rename, 2);

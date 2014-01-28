@@ -3,18 +3,20 @@
 The class Augeas provides bindings to augeas [http://augeas.net] library.
 
 == Usage: Setting Data
-    Augeas::open do |aug|
-      aug.set("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT", "YES")
-      unless aug.save
-        raise IOError, "Failed to save changes"
-      end
+  Augeas::create do |aug|
+    aug.set("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT", "YES")
+    unless aug.save
+      raise IOError, "Failed to save changes"
     end
+  end
 
 == Usage: Accessing Data
-    firstboot = Augeas::open { |aug| aug.get("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT") }
+    firstboot = Augeas::create {
+      |aug| aug.get("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT") }
+
 
 == Usage: Removing Data
-    Augeas::open do |aug|
+    Augeas::create do |aug|
       aug.rm("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT")
       unless aug.save
         raise IOError, "Failed to save changes"
@@ -23,12 +25,64 @@ The class Augeas provides bindings to augeas [http://augeas.net] library.
 
 == Usage: Minimal Setup with a Custom Root
 
-By passing +NO_MODL_AUTOLOAD+, no files are read on startup; that allows
-setting up a custom transform.
+By passing using the +:no_modl_autoload+ flag, no files are read on
+startup; that allows setting up a custom transform.
 
-  Augeas::open("/var/tmp/augeas-root", "/usr/local/share/mylenses",
-                Augeas::NO_MODL_AUTOLOAD) do |aug|
+  Augeas::create(:root => "/var/tmp/augeas-root",
+                 :loadpath => "/usr/local/share/mylenses",
+                 :no_modl_autoload => true) do |aug|
     aug.transform(:lens => "Aliases.lns", :incl => "/etc/aliases")
     aug.load
     aug.get("/files/etc/aliases/*[name = 'postmaster']/value")
   end
+
+      
+== Deprecation Warning
+
+The Augeas API has been heavily rewritten in order to better support
+errors. While the old functionality is still available unchanged if you
+instantiate the Augeas object with <tt>Augeas::open</tt>, it is highly
+preferred that you use the new API.
+
+To use the new API, just use <tt>Augeas::create</tt> instead of
+<tt>Augeas::open</tt>. This is the documentation for the
+<tt>Augeas::create</tt> method.
+
+Create a new Augeas instance and return it.
+
+Use <tt>:root</tt> as the filesystem root. If <tt>:root</tt> is
+<tt>nil</tt>, use the value of the environment variable
+<tt>AUGEAS_ROOT</tt>. If that doesn't exist either, use "/".
+
+<tt>:loadpath</tt> is a colon-spearated list of directories that modules
+should be searched in. This is in addition to the standard load path and
+the directories in <tt>AUGEAS_LENS_LIB</tt>.
+
+The following flags can be specified in a hash. They all default to
+false and can be enabled by setting them to true
+
+<tt>:type_check</tt> - typecheck lenses (since it can be very expensive
+it is not done by default)
+
+<tt>:no_stdinc</tt> - do not use the builtin load path for modules
+
+<tt>:no_load</tt> - do not load the tree during the initialization phase
+
+<tt>:no_modl_autoload</tt> - do not load the tree during the
+initialization phase
+
+<tt>:enable_span</tt> - track the span in the input nodes
+
+<tt>:save_mode</tt> can be one of <tt>:backup</tt>, <tt>:newfile</tt>,
+<tt>:noop</tt> as explained below.
+
+  :noop - make save a no-op process, just record what would have changed
+
+  :backup - keep the original file with an .augsave extension
+
+  :newfile - save changes into a file with an .augnew extension and do
+  not overwrite the original file.
+
+When a block is given, the Augeas instance is passed as the only
+argument into the block and closed when the block exits.  With no block,
+the Augeas instance is returned.
