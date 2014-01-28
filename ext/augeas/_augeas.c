@@ -55,12 +55,12 @@ VALUE augeas_get(VALUE s, VALUE path) {
     const char *cpath = StringValueCStr(path);
     const char *value = NULL;
 
-	int retval = aug_get(aug, cpath, &value);
+    int retval = aug_get(aug, cpath, &value);
 
     if (retval == 1 && value != NULL) {
-		return rb_str_new(value, strlen(value));
+        return rb_str_new(value, strlen(value));
     } else {
-		return Qnil;
+        return Qnil;
     }
 }
 
