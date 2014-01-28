@@ -26,6 +26,7 @@
 #include <ruby.h>
 #include <augeas.h>
 
+static VALUE c_augeas_old;
 static VALUE c_augeas;
 
 static augeas *aug_handle(VALUE s) {
@@ -368,7 +369,11 @@ VALUE augeas_init_split(VALUE m, VALUE r, VALUE l, VALUE f, char version) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    if (version == 0) {
+        return Data_Wrap_Struct(c_augeas_old, NULL, augeas_free, aug);
+    } else {
+        return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    }
 }
 
 VALUE augeas_init_old(VALUE m, VALUE r, VALUE l, VALUE f) {
@@ -659,6 +664,7 @@ void Init__augeas() {
     DEF_AUG_ERR(ENOLENS);
     DEF_AUG_ERR(EMXFM);
     DEF_AUG_ERR(ENOSPAN);
+    DEF_AUG_ERR(EMVDESC);
     DEF_AUG_ERR(ECMDRUN);
 #undef DEF_AUG_ERR
 
