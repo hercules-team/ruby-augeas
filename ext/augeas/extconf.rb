@@ -23,12 +23,26 @@ require 'mkmf'
 
 extension_name = '_augeas'
 
-unless pkg_config("augeas")
-    raise "augeas-devel not installed"
+# On Darwin compile for x86_64 only and link with augeas library to avoid dyld errors. 
+if RbConfig::CONFIG['target_os'] =~ /darwin/
+  $CFLAGS = $CFLAGS.gsub(/\-arch\ i386/, '')
+  $LDFLAGS = $LDFLAGS.gsub(/\-arch\ i386/, '')
+  $LDSHARED = RbConfig::MAKEFILE_CONFIG['LDSHARED']
+  RbConfig::MAKEFILE_CONFIG['LDSHARED'] = $LDSHARED.gsub(/\-arch\ i386/, '')
+  $LIBS += "-laugeas"
 end
 
-unless pkg_config("libxml-2.0")
-    raise "libxml2-devel not installed"
+# Use have_library rather than pkg_config
+unless have_library("augeas")
+  raise "libaugeas is not installed"
 end
+
+pkg_config('augeas')
+
+unless have_library("xml2")
+  raise "libxml2 is not installed"
+end
+
+pkg_config('libxml-2.0')
 
 create_makefile(extension_name)
