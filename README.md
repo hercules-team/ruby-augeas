@@ -2,7 +2,26 @@
 
 The class Augeas provides bindings to [Augeas](http://augeas.net) library.
 
-## Usage: Setting Data
+
+## Building
+
+To build the bindings, which unfortunately includes installing them from a
+gem, you need to have Augeas and its header file installed as well as
+`pkg-config`.
+
+On Fedora, you can do that simply by running
+```
+dnf install augeas-devel pkgconfig
+```
+
+On OSX, you need to set up [Homebrew](http://brew.sh/) and then run
+```
+brew install augeas pkg-config
+```
+
+## Usage
+
+### Setting Data
 ```ruby
     Augeas::open do |aug|
       aug.set("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT", "YES")
@@ -12,12 +31,12 @@ The class Augeas provides bindings to [Augeas](http://augeas.net) library.
     end
 ```
 
-## Usage: Accessing Data
+### Accessing Data
 ```ruby
     firstboot = Augeas::open { |aug| aug.get("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT") }
 ```
 
-## Usage: Removing Data
+### Removing Data
 ```ruby
     Augeas::open do |aug|
       aug.rm("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT")
@@ -27,9 +46,9 @@ The class Augeas provides bindings to [Augeas](http://augeas.net) library.
     end
 ```
 
-## Usage: Minimal Setup with a Custom Root
+### Minimal Setup with a Custom Root
 
-By passing +NO_MODL_AUTOLOAD+, no files are read on startup; that allows
+By passing `NO_MODL_AUTOLOAD`, no files are read on startup; that allows
 setting up a custom transform.
 
 ```ruby
