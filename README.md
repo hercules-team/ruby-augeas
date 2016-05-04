@@ -1,34 +1,42 @@
-= Ruby bindings for augeas
+# Ruby bindings for augeas
 
-The class Augeas provides bindings to augeas [http://augeas.net] library.
+The class Augeas provides bindings to [Augeas](http://augeas.net) library.
 
-== Usage: Setting Data
+## Usage: Setting Data
+```ruby
     Augeas::open do |aug|
       aug.set("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT", "YES")
       unless aug.save
         raise IOError, "Failed to save changes"
       end
     end
+```
 
-== Usage: Accessing Data
+## Usage: Accessing Data
+```ruby
     firstboot = Augeas::open { |aug| aug.get("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT") }
+```
 
-== Usage: Removing Data
+## Usage: Removing Data
+```ruby
     Augeas::open do |aug|
       aug.rm("/files/etc/sysconfig/firstboot/RUN_FIRSTBOOT")
       unless aug.save
         raise IOError, "Failed to save changes"
       end
     end
+```
 
-== Usage: Minimal Setup with a Custom Root
+## Usage: Minimal Setup with a Custom Root
 
 By passing +NO_MODL_AUTOLOAD+, no files are read on startup; that allows
 setting up a custom transform.
 
+```ruby
   Augeas::open("/var/tmp/augeas-root", "/usr/local/share/mylenses",
                 Augeas::NO_MODL_AUTOLOAD) do |aug|
     aug.transform(:lens => "Aliases.lns", :incl => "/etc/aliases")
     aug.load
     aug.get("/files/etc/aliases/*[name = 'postmaster']/value")
   end
+```
