@@ -176,6 +176,7 @@ VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
 VALUE augeas_match(VALUE s, VALUE p) {
     augeas *aug = aug_handle(s);
     const char *path = StringValueCStr(p);
+    VALUE result;
     char **matches = NULL;
     int cnt, i;
 
@@ -184,7 +185,7 @@ VALUE augeas_match(VALUE s, VALUE p) {
         rb_raise(rb_eSystemCallError, "Matching path expression '%s' failed",
                  path);
 
-    VALUE result = rb_ary_new();
+    result = rb_ary_new();
     for (i = 0; i < cnt; i++) {
         rb_ary_push(result, rb_str_new(matches[i], strlen(matches[i])));
         free(matches[i]) ;
@@ -396,14 +397,15 @@ VALUE augeas_span(VALUE s, VALUE path) {
 VALUE augeas_srun(VALUE s, VALUE text) {
     augeas *aug = aug_handle(s);
     const char *ctext = StringValueCStr(text);
-
+    int r;
+    VALUE result;
     struct memstream ms;
     __aug_init_memstream(&ms);
 
-    int r = aug_srun(aug, ms.stream, ctext);
+    r = aug_srun(aug, ms.stream, ctext);
     __aug_close_memstream(&ms);
 
-    VALUE result = rb_ary_new();
+    result = rb_ary_new();
     rb_ary_push(result, INT2NUM(r));
     rb_ary_push(result, rb_str_new2(ms.buf));
 
