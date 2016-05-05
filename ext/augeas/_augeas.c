@@ -51,11 +51,34 @@ static void augeas_free(augeas *aug) {
 VALUE augeas_get(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path);
-    const char *value;
+    const char *value = NULL;
 
-    aug_get(aug, cpath, &value);
-    if (value != NULL) {
+    int r = aug_get(aug, cpath, &value);
+    /* There used to be a bug in Augeas that would make it not properly set
+     * VALUE to NULL when PATH was invalid. We check RETVAL, too, to avoid
+     * running into that */
+    if (r == 1 && value != NULL) {
         return rb_str_new(value, strlen(value)) ;
+    } else {
+        return Qnil;
+    }
+}
+
+/*
+ * call-seq:
+ *   get(PATH) -> String
+ *
+ * Lookup the value associated with PATH
+ */
+VALUE facade_get(VALUE s, VALUE path) {
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValueCStr(path);
+    const char *value = NULL;
+
+    int retval = aug_get(aug, cpath, &value);
+
+    if (retval == 1 && value != NULL) {
+        return rb_str_new(value, strlen(value));
     } else {
         return Qnil;
     }
