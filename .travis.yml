@@ -10,6 +10,9 @@ rvm:
 notifications:
   email:
    - raphael.pinson@camptocamp.com
+  irc:
+    channels:
+      - "irc.freenode.org#augeas"
 install:
   # Use latest Augeas
   - sudo add-apt-repository -y ppa:raphink/augeas
