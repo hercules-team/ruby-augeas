@@ -519,7 +519,10 @@ void Init__augeas() {
     DEF_AUG_ERR(ENOLENS);
     DEF_AUG_ERR(EMXFM);
     DEF_AUG_ERR(ENOSPAN);
+    DEF_AUG_ERR(EMVDESC);
     DEF_AUG_ERR(ECMDRUN);
+    DEF_AUG_ERR(EBADARG);
+    DEF_AUG_ERR(ELABEL);
 #undef DEF_AUG_ERR
 
     /* Define the methods */
