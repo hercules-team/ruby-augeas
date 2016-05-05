@@ -1,6 +1,8 @@
 require 'test/unit'
 
-TOPDIR = File::expand_path(File::join(File::dirname(__FILE__), ".."))
+unless defined?(TOPDIR)
+  TOPDIR = File::expand_path(File::join(File::dirname(__FILE__), ".."))
+end
 
 $:.unshift(File::join(TOPDIR, "lib"))
 $:.unshift(File::join(TOPDIR, "ext", "augeas"))

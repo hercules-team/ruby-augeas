@@ -21,12 +21,83 @@
 ##
 
 require "_augeas"
+require "augeas/facade"
 
 # Wrapper class for the augeas[http://augeas.net] library.
 class Augeas
     private_class_method :new
 
     class Error < RuntimeError; end
+	class NoMemoryError           < Error; end
+	class InternalError           < Error; end
+	class InvalidPathError        < Error; end
+	class NoMatchError            < Error; end
+	class MultipleMatchesError    < Error; end
+	class LensSyntaxError         < Error; end
+	class LensNotFoundError       < Error; end
+	class MultipleTransformsError < Error; end
+	class NoSpanInfoError         < Error; end
+	class DescendantError         < Error; end
+	class CommandExecutionError   < Error; end
+	class InvalidArgumentError    < Error; end
+	class InvalidLabelError       < Error; end
+	ERRORS_HASH = Hash[{
+		# the cryptic error names come from the C library, we just make
+		# them more ruby and more human
+		:ENOMEM    => NoMemoryError,
+		:EINTERNAL => InternalError,
+		:EPATHX    => InvalidPathError,
+		:ENOMATCH  => NoMatchError,
+		:EMMATCH   => MultipleMatchesError,
+		:ESYNTAX   => LensSyntaxError,
+		:ENOLENS   => LensNotFoundError,
+		:EMXFM     => MultipleTransformsError,
+		:ENOSPAN   => NoSpanInfoError,
+		:EMVDESC   => DescendantError,
+		:ECMDRUN   => CommandExecutionError,
+		:EBADARG   => InvalidArgumentError,
+		:ELABEL    => InvalidLabelError,
+	}.map { |k, v| [(const_get(k) rescue nil), v] }].freeze
+
+    # Create a new Augeas instance and return it.
+	#
+	# Use +:root+ as the filesystem root. If +:root+ is +nil+, use the value
+	# of the environment variable +AUGEAS_ROOT+. If that doesn't exist
+	# either, use "/".
+	#
+	# +:loadpath+ is a colon-spearated list of directories that modules
+	# should be searched in. This is in addition to the standard load path
+	# and the directories in +AUGEAS_LENS_LIB+
+	#
+	# The following flags can be specified in a hash. They all default to
+	# false and can be enabled by setting them to true
+	#
+	# :type_check - typecheck lenses (since it can be very expensive it is
+	# not done by default)
+	#
+	# :no_stdinc - do not use the builtin load path for modules
+	#
+	# :no_load - do not load the tree during the initialization phase
+	#
+	# :no_modl_autoload - do not load the tree during the initialization phase
+	#
+	# :enable_span - track the span in the input nodes
+	#
+	# :save_mode can be one of :backup, :newfile, :noop as explained below.
+	#
+	#   :noop - make save a no-op process, just record what would have changed
+	#
+	#   :backup - keep the original file with an .augsave extension
+	#
+	#   :newfile - save changes into a file with an .augnew extension and
+	#   do not overwrite the original file.
+	#
+	# When a block is given, the Augeas instance is passed as the only
+	# argument into the block and closed when the block exits.
+	# With no block, the Augeas instance is returned.
+    def self.create(opts={}, &block)
+      Augeas::Facade::create(opts, &block)
+    end
 
     # Create a new Augeas instance and return it.
     #

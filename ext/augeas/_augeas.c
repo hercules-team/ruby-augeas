@@ -25,6 +25,7 @@
 #include <augeas.h>
 
 static VALUE c_augeas;
+static VALUE c_facade;
 
 static augeas *aug_handle(VALUE s) {
     augeas *aug;
@@ -74,28 +75,30 @@ VALUE augeas_exists(VALUE s, VALUE path) {
     return (ret == 1) ? Qtrue : Qfalse;
 }
 
+static int set(VALUE s, VALUE path, VALUE value) {
+    augeas *aug = aug_handle(s);
+    const char *cpath = StringValueCStr(path) ;
+    const char *cvalue = StringValueCStrOrNull(value) ;
+
+    return aug_set(aug, cpath, cvalue) ;
+}
+
 /*
  * call-seq:
- *   set(PATH, VALUE) -> boolean
+ *   set(PATH, VALUE) -> int
  *
  * Set the value associated with PATH to VALUE. VALUE is copied into the
  * internal data structure. Intermediate entries are created if they don't
  * exist.
  */
 VALUE augeas_set(VALUE s, VALUE path, VALUE value) {
-    augeas *aug = aug_handle(s);
-    const char *cpath = StringValueCStr(path) ;
-    const char *cvalue = StringValueCStrOrNull(value) ;
+    int callValue = set(s, path, value);
 
-    int callValue = aug_set(aug, cpath, cvalue) ;
-    VALUE returnValue ;
+    return (callValue == 0) ? Qtrue : Qfalse;
+}
 
-    if (callValue == 0)
-        returnValue = Qtrue ;
-    else
-        returnValue = Qfalse ;
-
-    return returnValue ;
+VALUE facade_set(VALUE s, VALUE path, VALUE value) {
+    return INT2FIX(set(s, path, value));
 }
 
 /*
@@ -197,21 +200,54 @@ VALUE augeas_match(VALUE s, VALUE p) {
 
 /*
  * call-seq:
+ *       match(PATH) -> an_array
+ *
+ * Return all the paths that match the path expression PATH as an aray of
+ * strings.
+ * Returns an empty array if no paths were found.
+ */
+VALUE facade_match(VALUE s, VALUE p) {
+    augeas *aug = aug_handle(s);
+    const char *path = StringValueCStr(p);
+    char **matches = NULL;
+    int cnt, i;
+    VALUE result;
+
+    cnt = aug_match(aug, path, &matches) ;
+    if (cnt < 0)
+        return -1;
+
+    result = rb_ary_new();
+    for (i = 0; i < cnt; i++) {
+        rb_ary_push(result, rb_str_new(matches[i], strlen(matches[i])));
+        free(matches[i]) ;
+    }
+    free (matches) ;
+
+    return result ;
+}
+
+/*
+ * call-seq:
  *       save() -> boolean
  *
  * Write all pending changes to disk
  */
 VALUE augeas_save(VALUE s) {
     augeas *aug = aug_handle(s);
-    int callValue = aug_save(aug) ;
-    VALUE returnValue ;
 
-    if (callValue == 0)
-        returnValue = Qtrue ;
-    else
-        returnValue = Qfalse ;
+    return (aug_save(aug) == 0) ? Qtrue : Qfalse;
+}
 
-    return returnValue ;
+/*
+ * call-seq:
+ *       save() -> int
+ *
+ * Write all pending changes to disk
+ */
+VALUE facade_save(VALUE s) {
+    augeas *aug = aug_handle(s);
+    return INT2FIX(aug_save(aug));
 }
 
 /*
@@ -283,7 +319,7 @@ VALUE augeas_defnode(VALUE s, VALUE name, VALUE expr, VALUE value) {
     return (r < 0) ? Qfalse : INT2NUM(r);
 }
 
-VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+static VALUE init(VALUE class, VALUE m, VALUE r, VALUE l, VALUE f) {
     unsigned int flags = NUM2UINT(f);
     const char *root = StringValueCStrOrNull(r);
     const char *loadpath = StringValueCStrOrNull(l);
@@ -293,7 +329,15 @@ VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(c_augeas, NULL, augeas_free, aug);
+    return Data_Wrap_Struct(class, NULL, augeas_free, aug);
+}
+
+VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return init(c_augeas, m, r, l, f);
+}
+
+VALUE facade_init(VALUE m, VALUE r, VALUE l, VALUE f) {
+    return init(c_facade, m, r, l, f);
 }
 
 VALUE augeas_close (VALUE s) {
@@ -491,6 +535,7 @@ void Init__augeas() {
 
     /* Define the ruby class */
     c_augeas = rb_define_class("Augeas", rb_cObject) ;
+    c_facade = rb_define_class_under(c_augeas, "Facade", rb_cObject);
 
     /* Constants for enum aug_flags */
 #define DEF_AUG_FLAG(name) \
@@ -547,6 +592,30 @@ void Init__augeas() {
     rb_define_method(c_augeas, "rename", augeas_rename, 2);
     rb_define_method(c_augeas, "text_store", augeas_text_store, 3);
     rb_define_method(c_augeas, "text_retrieve", augeas_text_retrieve, 4);
+
+    /* Define methods to support the 'new' API in Augeas::Facade */
+    rb_define_singleton_method(c_facade, "open3", facade_init, 3);
+    /* The `close` and `error` methods as used unchanged in the ruby bindings */
+    rb_define_method(c_facade, "close", augeas_close, 0);
+    rb_define_method(c_facade, "error", augeas_error, 0);
+    rb_define_method(c_facade, "augeas_defvar", augeas_defvar, 2);
+    rb_define_method(c_facade, "augeas_defnode", augeas_defnode, 3);
+    rb_define_method(c_facade, "augeas_get", augeas_get, 1);
+    rb_define_method(c_facade, "augeas_exists", augeas_exists, 1);
+    rb_define_method(c_facade, "augeas_insert", augeas_insert, 3);
+    rb_define_method(c_facade, "augeas_mv", augeas_mv, 2);
+    rb_define_method(c_facade, "augeas_rm", augeas_rm, 1);
+    rb_define_method(c_facade, "augeas_match", facade_match, 1);
+    rb_define_method(c_facade, "augeas_save", facade_save, 0);
+    rb_define_method(c_facade, "augeas_load", augeas_load, 0);
+    rb_define_method(c_facade, "augeas_set", facade_set, 2);
+    rb_define_method(c_facade, "augeas_setm", augeas_setm, 3);
+    rb_define_method(c_facade, "augeas_span", augeas_span, 1);
+    rb_define_method(c_facade, "augeas_srun", augeas_srun, 1);
+    rb_define_method(c_facade, "augeas_label", augeas_label, 1);
+    rb_define_method(c_facade, "augeas_rename", augeas_rename, 2);
+    rb_define_method(c_facade, "augeas_text_store", augeas_text_store, 3);
+    rb_define_method(c_facade, "augeas_text_retrieve", augeas_text_retrieve, 4);
 }
 
 /*
