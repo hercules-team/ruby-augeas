@@ -20,7 +20,11 @@
 # Author: Bryan Kearney <bkearney@redhat.com>
 ##
 
-require "_augeas"
+begin
+  require "augeas/#{RUBY_VERSION.split('.')[0, 2].join('.')}/_augeas"
+rescue LoadError
+  require 'augeas/_augeas'
+end
 
 # Wrapper class for the augeas[http://augeas.net] library.
 class Augeas
@@ -45,6 +49,14 @@ class Augeas
     # case, the return value of the block is the return value of
     # +open+. With no block, the Augeas instance is returned.
     def self.open(root = nil, loadpath = nil, flags = NONE, &block)
+        vendored_lenses = File.expand_path('../lenses', File.dirname(__FILE__))
+
+        if loadpath.nil?
+            loadpath = vendored_lenses
+        else
+            loadpath << ':' << vendored_lenses
+        end
+
         aug = open3(root, loadpath, flags)
         if block_given?
             begin

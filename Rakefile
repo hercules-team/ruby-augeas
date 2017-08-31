@@ -8,128 +8,93 @@
 #
 # Bryan Kearney <bkearney@redhat.com>
 
+require 'fileutils'
 require 'rake/clean'
+require 'rake/extensiontask'
 require 'rdoc/task'
-require 'rake/testtask'
+require 'rubygems/package'
 require 'rubygems/package_task'
+require 'zlib'
 
-PKG_NAME='ruby-augeas'
-GEM_NAME=PKG_NAME # we'd like 'augeas' but that makes RPM fail
-PKG_VERSION='0.5.0'
-EXT_CONF='ext/augeas/extconf.rb'
-MAKEFILE="ext/augeas/Makefile"
-AUGEAS_MODULE="ext/augeas/_augeas.so"
-SPEC_FILE="ruby-augeas.spec"
-AUGEAS_SRC=AUGEAS_MODULE.gsub(/.so$/, ".c")
-
-#
-# Building the actual bits
-#
-CLEAN.include [ "**/*~",
-                "ext/**/*.o", AUGEAS_MODULE,
-                "ext/**/depend" ]
-
-CLOBBER.include [ "config.save",
-                  "ext/**/mkmf.log",
-                  MAKEFILE ]
-
-file MAKEFILE => EXT_CONF do |t|
-    Dir::chdir(File::dirname(EXT_CONF)) do
-         unless sh "ruby #{File::basename(EXT_CONF)}"
-             $stderr.puts "Failed to run extconf"
-             break
-         end
-    end
-end
-file AUGEAS_MODULE => [ MAKEFILE, AUGEAS_SRC ] do |t|
-    Dir::chdir(File::dirname(EXT_CONF)) do
-         unless sh "make"
-             $stderr.puts "make failed"
-             break
-         end
-     end
-end
-desc "Build the native library"
-task :build => AUGEAS_MODULE
-
-#
-# Testing
-#
-Rake::TestTask.new(:test) do |t|
-    t.test_files = FileList['tests/tc_*.rb']
-    t.libs = [ 'lib', 'ext/augeas' ]
-end
-task :test => :build
-
-
-#
-# Generate the documentation
-#
-RDoc::Task.new do |rd|
-    rd.main = "README.rdoc"
-    rd.rdoc_dir = "doc/site/api"
-    rd.rdoc_files.include("README.rdoc", "ext/**/*.[ch]","lib/**/*.rb")
-end
-
-#
-# Packaging
-#
-PKG_FILES = FileList[
-  "Rakefile", "COPYING","README.rdoc", "NEWS",
-  "ext/**/*.[ch]", "lib/**/*.rb", "ext/**/MANIFEST", "ext/**/extconf.rb",
-  "tests/**/*",
-  "spec/**/*"
+CLEAN.include [
+  'pkg/*/',
+  'ports/',
+  'tmp/',
+]
+CLOBBER.include [
+  'doc/',
+  'lenses/',
+  'lib/augeas/_augeas.so',
+  'pkg/*.gem',
 ]
 
-DIST_FILES = FileList[
-  "pkg/*.tgz", "pkg/*.gem"
-]
-
-SPEC = Gem::Specification.new do |s|
-    s.name = GEM_NAME
-    s.version = PKG_VERSION
-    s.email = "augeas-devel@redhat.com"
-    s.homepage = "http://augeas.net/"
-    s.summary = "Ruby bindings for augeas"
-    s.authors = [ "Bryan Kearney", "David Lutterkort" ]
-    s.files = PKG_FILES
-    s.autorequire = "augeas"
-    s.required_ruby_version = '>= 1.8.1'
-    s.extensions = "ext/augeas/extconf.rb"
-    s.description = "Provides bindings for augeas."
+RDoc::Task.new do |rdoc|
+  rdoc.main = 'README.md'
+  rdoc.rdoc_dir = 'doc/site/api'
+  rdoc.rdoc_files.include('README.md', 'ext/augeas/*.[ch]', 'lib/**/*.rb')
 end
 
-Gem::PackageTask.new(SPEC) do |pkg|
-    pkg.need_tar = true
-    pkg.need_zip = true
+spec = Gem::Specification.new do |spec|
+  spec.name        = 'ruby-augeas'
+  spec.version     = '0.5.0'
+  spec.summary     = 'Ruby bindings for augeas'
+  spec.description = 'Provides bindings for augeas.'
+  spec.authors     = ['Bryan Kearney', 'David Lutterkort']
+  spec.email       = 'augeas-devel@redhat.com'
+  spec.homepage    = 'http://augeas.net/'
+
+  spec.required_ruby_version = '>= 2.0'
+
+  spec.files = Dir[
+    'ext/augeas/*.[ch]',
+    'lenses/*.aug',
+    'lib/**/*.rb',
+  ]
+  spec.extensions = ['ext/augeas/extconf.rb']
+end
+task gem: ['lenses']
+
+pkg_task = Gem::PackageTask.new(spec) do |pkg|
 end
 
-desc "Build (S)RPM for #{PKG_NAME}"
-task :rpm => [ :package ] do |t|
-    system("sed -e 's/@VERSION@/#{PKG_VERSION}/' #{SPEC_FILE} > pkg/#{SPEC_FILE}")
-    Dir::chdir("pkg") do |dir|
-        dir = File::expand_path(".")
-        system("rpmbuild --define '_topdir #{dir}' --define '_sourcedir #{dir}' --define '_srcrpmdir #{dir}' --define '_rpmdir #{dir}' --define '_builddir #{dir}' -ba #{SPEC_FILE} > rpmbuild.log 2>&1")
-        if $? != 0
-            raise "rpmbuild failed"
-        end
+desc 'Extract augeas lenses from source archive'
+directory 'lenses' => [augeas_tgz = 'ports/archives/augeas-1.8.1.tar.gz'] do
+  Gem::Package::TarReader.new(Zlib::GzipReader.open(augeas_tgz)) do |tar|
+    FileUtils.mkdir_p('lenses')
+    lenses = []
+
+    tar.each do |entry|
+      next unless File.fnmatch?('augeas-*/lenses/*.aug', entry.full_name, File::FNM_PATHNAME)
+
+      dest = File.join('lenses', File.basename(entry.full_name))
+      puts "Copying #{entry.full_name} to #{dest}"
+      File.open(dest, 'wb') { |file| file.write(entry.read) }
+      lenses << dest
     end
+
+    # We need to add the lenses to the gemspec as `Dir.glob` is evaluated
+    # before the `lenses/` directory exists.
+    spec.files += lenses
+    pkg_task.package_files += lenses
+  end
 end
 
-desc "Release a version to the site"
-task :dist => [ :rpm ] do |t|
-    puts "Copying files"
-    unless sh "scp -p #{DIST_FILES.to_s} et:/var/www/sites/augeas.et.redhat.com/download/ruby"
-        $stderr.puts "Copy to et failed"
-        break
-    end
-    puts "Commit and tag #{PKG_VERSION}"
-    system "git commit -a -m 'Released version #{PKG_VERSION}'"
-    system "git tag -s -m 'Tag release #{PKG_VERSION}' release-#{PKG_VERSION}"
+file 'ports/archives/augeas-1.8.1.tar.gz' => 'compile:_augeas'
+
+Rake::ExtensionTask.new('_augeas', spec) do |ext|
+  ext.ext_dir        = 'ext/augeas'
+  ext.lib_dir        = 'lib/augeas'
+  ext.cross_compile  = true
+  ext.cross_platform = ['x86-linux', 'x86_64-linux']
 end
 
-task :sync do |t|
-    system "rsync -rav doc/site/ et:/var/www/sites/augeas.et.redhat.com/docs/ruby/"
-end
+desc 'Build the native gem file under rake_compiler_dock'
+task 'gem:native' do
+  require 'rake_compiler_dock'
 
-task :default => [:build, :test]
+  RakeCompilerDock.sh [
+    'sudo apt-get --quiet --quiet --yes install libreadline-dev:amd64 libreadline-dev:i386 zlib1g-dev:amd64 zlib1g-dev:i386',
+    'bundle install --quiet',
+    'rake cross native gem',
+  ].join(' && ')
+end

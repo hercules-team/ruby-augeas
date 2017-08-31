@@ -1,7 +1,13 @@
-build/
 doc/
 ext/augeas/Makefile
 ext/augeas/*.o
 ext/augeas/*.so
 ext/augeas/*.log
+ext/augeas/tmp/
+lenses/
+lib/augeas/**/_augeas.so
+lib/_augeas.so
+Gemfile.lock
 pkg/
+ports/
+tmp/
