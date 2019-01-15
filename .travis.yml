@@ -1,15 +1,18 @@
-language: ruby
+---
+cache: 'bundler'
+language: 'ruby'
+
 rvm:
-  # CentOS 6 is still stuck on this
-  - 1.8.7
-  - 1.9.3
-  # CentOS 7 uses Ruby 2.0.0
-  - 2.0.0
-  # This is the latest stable MRI Ruby right now
-  - 2.3.1
-notifications:
-  email:
-   - raphael.pinson@camptocamp.com
-  irc:
-    channels:
-      - "irc.freenode.org#augeas"
+  - '2.0'
+  - '2.1'
+  - '2.2'
+  - '2.3.4'
+  - '2.4.1'
+  - '2.5.1'
+  - '2.6.0'
+  - 'ruby-head'
+
+matrix:
+  allow_failures:
+    - rvm: 'ruby-head'
+  fast_finish: true
