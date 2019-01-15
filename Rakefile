@@ -98,3 +98,5 @@ task 'gem:native' do
     'rake cross native gem',
   ].join(' && ')
 end
+
+task :default => [:compile, :test]
