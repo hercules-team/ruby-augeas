@@ -133,7 +133,7 @@ augeas_recipe = process_recipe('augeas', '1.8.1') do |recipe|
     "PKG_CONFIG_PATH=#{libxml_recipe.path}/lib/pkgconfig",
   ]
 
-  $libs << ' -lfa'
+  $libs = append_library($libs, 'fa')
 end
 
 create_makefile('_augeas')
