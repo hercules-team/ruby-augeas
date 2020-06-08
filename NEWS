@@ -1,3 +1,7 @@
+0.6.0 - 2020-06-08
+  - small fixes and update README (GH #7)
+  - add more Rubyish bindings as an alternative API (GH #8)
+
 0.5.0 - 2013-03-12
   - add libxml2 headers and library to Makefile
   - add libxml2-devel build req to rpm spec
