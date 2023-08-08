@@ -558,7 +558,9 @@ void Init__augeas() {
 
     /* Define the ruby class */
     c_augeas = rb_define_class("Augeas", rb_cObject) ;
+    rb_undef_alloc_func(c_augeas);
     c_facade = rb_define_class_under(c_augeas, "Facade", rb_cObject);
+    rb_undef_alloc_func(c_facade);
 
     /* Constants for enum aug_flags */
 #define DEF_AUG_FLAG(name) \
