@@ -184,7 +184,7 @@ VALUE augeas_mv(VALUE s, VALUE src, VALUE dst) {
  *
  * Remove path and all its children. Returns the number of entries removed
  */
-VALUE augeas_rm(VALUE s, VALUE path, VALUE sibling) {
+VALUE augeas_rm(VALUE s, VALUE path) {
     augeas *aug = aug_handle(s);
     const char *cpath = StringValueCStr(path) ;
 
