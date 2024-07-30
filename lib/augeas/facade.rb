@@ -308,7 +308,7 @@ class Augeas::Facade
 
     raise_last_error
 
-    if result.kind_of? Fixnum and result < 0
+    if result.kind_of? Integer and result < 0
       # we raise CommandExecutionError here, because this is the error that
       # augtool raises in this case as well
       raise Augeas::CommandExecutionError, "Command failed. Return code was #{result}."
