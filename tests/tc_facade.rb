@@ -152,10 +152,10 @@ class TestAugeasFacade < Test::Unit::TestCase
 	end
 
 	def test_load_bad_lens
-		aug = aug_create(:no_load => true)
+		aug = aug_create(:no_load => true, :no_modl_autoload => true)
 		aug.transform(:lens => "bad_lens", :incl => "irrelevant")
-		assert_raises(Augeas::LensNotFoundError) { aug.load }
-		assert_equal "Can not find lens bad_lens", aug.error[:details]
+		aug.load
+		assert_equal "Can not find lens bad_lens", aug.get("/augeas/load/bad_lens/error")
 	end
 
 	def test_transform
