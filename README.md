@@ -14,10 +14,33 @@ On Fedora, you can do that simply by running
 dnf install augeas-devel pkgconfig
 ```
 
-On OSX, you need to set up [Homebrew](http://brew.sh/) and then run
+On MacOS (OSX), you need to set up [Homebrew](http://brew.sh/) and then run
 ```
 brew install augeas pkg-config
 ```
+
+Build the ruby gem by running
+```
+rake build
+rake test
+rake gem
+```
+The output is pkg/ruby-augeas-VERSION.gem
+
+Build the rpm package (optional) in the pkg/ subdirectory
+```
+rake rpm
+```
+The output is pkg/ruby-augeas-VERSION-1.DIST.src.rpm with binary packages in pkg/$(uname -m)
+
+Create html documentation using rdoc
+
+```
+rake rdoc
+```
+
+The output is in doc/site/api/
+The starting document is doc/site/api/index.html
 
 ## Usage
 
