@@ -1,6 +1,8 @@
+![ruby-augeas ci build status](../../actions/workflows/ci.yml/badge.svg)
+
 # Ruby bindings for augeas
 
-The class Augeas provides bindings to [Augeas](http://augeas.net) library.
+The class Augeas provides bindings to [Augeas](https://augeas.net) library.
 
 
 ## Building
@@ -14,7 +16,7 @@ On Fedora, you can do that simply by running
 dnf install augeas-devel pkgconfig
 ```
 
-On MacOS (OSX), you need to set up [Homebrew](http://brew.sh/) and then run
+On MacOS (OSX), you need to set up [Homebrew](https://brew.sh/) and then run
 ```
 brew install augeas pkg-config
 ```
