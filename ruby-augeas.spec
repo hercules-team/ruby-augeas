@@ -40,7 +40,7 @@ install -p -m0644 lib/augeas.rb %{buildroot}%{ruby_vendorlibdir}
 install -p -m0755 ext/augeas/_augeas.so %{buildroot}%{ruby_vendorarchdir}
 
 %check
-ruby tests/tc_augeas.rb
+rake test
 
 
 %files
