@@ -27,17 +27,28 @@
 static VALUE c_augeas;
 static VALUE c_facade;
 
+static void augeas_free(void *data);
+
+static const rb_data_type_t augeas_rb_data_type = {
+    .wrap_struct_name = "Augeas",
+    .function = {
+        .dfree = augeas_free,
+    },
+};
+
+
 static augeas *aug_handle(VALUE s) {
     augeas *aug;
 
-    Data_Get_Struct(s, struct augeas, aug);
+    TypedData_Get_Struct(s, struct augeas, &augeas_rb_data_type, aug);
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to retrieve connection");
     }
     return aug;
 }
 
-static void augeas_free(augeas *aug) {
+static void augeas_free(void *data) {
+    augeas *aug = data;
     if (aug != NULL)
         aug_close(aug);
 }
@@ -352,7 +363,7 @@ static VALUE init(VALUE class, VALUE m, VALUE r, VALUE l, VALUE f) {
     if (aug == NULL) {
         rb_raise(rb_eSystemCallError, "Failed to initialize Augeas");
     }
-    return Data_Wrap_Struct(class, NULL, augeas_free, aug);
+    return TypedData_Wrap_Struct(class, &augeas_rb_data_type, aug);
 }
 
 VALUE augeas_init(VALUE m, VALUE r, VALUE l, VALUE f) {
